@@ -1,0 +1,78 @@
+# Data Folders - Large datasets should not be committed
+module2/data/
+data/
+docs/
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
+
+# Virtual Environments
+venv/
+.venv/
+env/
+ENV/
+.env
+
+# IDE and Editor Files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+Thumbs.db
+*.sublime-workspace
+*.sublime-project
+
+# Jupyter Notebooks
+
+# Testing
+.pytest_cache/
+.coverage
+.coverage.*
+htmlcov/
+
+# Logging
+*.log
+logs/
+
+# OS Files
+.DS_Store
+.AppleDouble
+.LSOverride
+Thumbs.db
+*.lnk
+
+
+# Temporary Files
+*.tmp
+*.temp
+*~
+.tmp/
+
+
+# But keep certain important configs
+!.gitignore
+!.github/
+!.github/**/*.yml
+!.github/**/*.yaml
