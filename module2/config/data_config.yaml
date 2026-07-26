@@ -1,0 +1,44 @@
+# Data Configuration for Module 2
+# Paths, metrics, and data sources
+
+# Raw data paths
+raw_data_base_path: ./data/raw
+
+# Cases to process
+cases:
+  - scenario: single
+    case: case1
+  - scenario: single
+    case: case2
+  - scenario: complex
+    case: case1
+  - scenario: complex
+    case: case2
+
+# Core metrics to extract (must have these 7)
+core_metrics:
+  - container_cpu_usage_seconds_total
+  - container_cpu_system_seconds_total
+  - container_cpu_user_seconds_total
+  - container_memory_usage_bytes
+  - container_memory_working_set_bytes
+  - container_memory_rss
+  - container_memory_cache
+
+# Optional metrics (if available)
+optional_metrics:
+  - container_threads
+  - container_spec_cpu_quota
+  - container_spec_memory_limit_bytes
+
+# Output configuration
+processed_data_path: ./data/processed
+output_format: csv
+
+# Number of containers
+num_containers: 27
+
+# Data validation
+validate_timestamps: true
+validate_cmdb_ids: true
+handle_missing_values: forward_fill

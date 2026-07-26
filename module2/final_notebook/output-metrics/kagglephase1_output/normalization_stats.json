@@ -1,0 +1,30 @@
+{
+ "container_cpu_usage_seconds_total": {
+  "mean": 1050.6505028056977,
+  "std": 1100.9870643488227
+ },
+ "container_cpu_system_seconds_total": {
+  "mean": 111.92365293043798,
+  "std": 127.36604698159455
+ },
+ "container_cpu_user_seconds_total": {
+  "mean": 304.42359267486245,
+  "std": 354.9073310854647
+ },
+ "container_memory_usage_bytes": {
+  "mean": 82717624.44155894,
+  "std": 16086988.437822454
+ },
+ "container_memory_working_set_bytes": {
+  "mean": 81760289.61316177,
+  "std": 15399110.831006827
+ },
+ "container_memory_rss": {
+  "mean": 69604729.21338238,
+  "std": 10591065.522328964
+ },
+ "container_memory_cache": {
+  "mean": 8246471.419401784,
+  "std": 10563083.940616034
+ }
+}

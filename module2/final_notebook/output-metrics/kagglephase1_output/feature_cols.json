@@ -1,0 +1,49 @@
+{
+ "feature_cols": [
+  "container_cpu_usage_seconds_total",
+  "container_cpu_system_seconds_total",
+  "container_cpu_user_seconds_total",
+  "container_memory_usage_bytes",
+  "container_memory_working_set_bytes",
+  "container_memory_rss",
+  "container_memory_cache",
+  "container_cpu_usage_seconds_total_DIFF_1",
+  "container_cpu_usage_seconds_total_DIFF_2",
+  "container_cpu_usage_seconds_total_DIFF_3",
+  "container_cpu_usage_seconds_total_ROLLING_MEAN_3",
+  "container_cpu_usage_seconds_total_ROLLING_STD_3",
+  "container_memory_usage_bytes_DIFF_1",
+  "container_memory_usage_bytes_DIFF_2",
+  "container_memory_usage_bytes_DIFF_3",
+  "container_memory_usage_bytes_ROLLING_MEAN_3",
+  "container_memory_usage_bytes_ROLLING_STD_3",
+  "container_memory_working_set_bytes_DIFF_1",
+  "container_memory_working_set_bytes_DIFF_2",
+  "container_memory_working_set_bytes_DIFF_3",
+  "container_memory_working_set_bytes_ROLLING_MEAN_3",
+  "container_memory_working_set_bytes_ROLLING_STD_3",
+  "container_memory_rss_DIFF_1",
+  "container_memory_rss_DIFF_2",
+  "container_memory_rss_DIFF_3",
+  "container_memory_rss_ROLLING_MEAN_3",
+  "container_memory_rss_ROLLING_STD_3"
+ ],
+ "target_columns": [
+  "container_cpu_usage_seconds_total",
+  "container_memory_usage_bytes",
+  "container_memory_working_set_bytes",
+  "container_memory_rss"
+ ],
+ "target_names": [
+  "cpu_usage",
+  "mem_usage",
+  "mem_working_set",
+  "mem_rss"
+ ],
+ "target_idx": [
+  0,
+  3,
+  4,
+  5
+ ]
+}

@@ -1,0 +1,26 @@
+{
+ "pipeline": "kagglephase1",
+ "case": "complex_case1",
+ "design": "rolling-origin, target-row split, 10-row embargo, adaptive lookback",
+ "min_lookback": 500,
+ "max_lookback": 1000,
+ "max_horizon": 10,
+ "window_format": "[anchor_end_exclusive, lookback_length]; X = features[end-L:end]; y(h) = features[end-1+h, target_idx]",
+ "burst_design": {
+  "profile": "ramp20/hold10/decay20",
+  "cpu": "rate-bump (monotonic, permanent level shift)",
+  "memory": "bump-and-return, 15-35% of median level, correlated x0.8-1.0",
+  "events_per_split": {
+   "train": 8,
+   "val": 3,
+   "test": 4
+  },
+  "seeds": {
+   "train": 101,
+   "val": 202,
+   "test": 303
+  }
+ },
+ "n_rows": 223830,
+ "n_containers": 27
+}
