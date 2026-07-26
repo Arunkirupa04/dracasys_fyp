@@ -1,7 +1,6 @@
 # Data Folders - Large datasets should not be committed
 module2/data/
 data/
-docs/
 
 # Python
 __pycache__/
