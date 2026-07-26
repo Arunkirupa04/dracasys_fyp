@@ -1,0 +1,13 @@
+{
+  "drift_slice_frac": 0.3,
+  "stream_ordering": "timestamp",
+  "finetune_benign_source": "stable_slice_fallback",
+  "finetune_benign_n": 200,
+  "finetune_steps": 50,
+  "finetune_lr": 1e-05,
+  "auc_before": NaN,
+  "auc_after": NaN,
+  "auc_delta": NaN,
+  "interpretation": "positive_delta",
+  "catastrophic_forgetting_note": "Benign-only MSE fine-tune may collapse attack separation learned offline. See thesis_drift_aware_notes.md \u00a74."
+}

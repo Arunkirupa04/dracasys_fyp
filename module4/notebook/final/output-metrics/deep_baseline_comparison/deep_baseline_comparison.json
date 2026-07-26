@@ -1,0 +1,66 @@
+{
+  "created_at": "2026-07-26T06:17:42.414574+00:00",
+  "dense_ae": {
+    "roc_auc": 0.662445756914398,
+    "pr_auc": 0.46294802768123583,
+    "f1": 0.626228107646305,
+    "mcc": 0.34358324558109066,
+    "precision": 0.5401621223286662,
+    "recall": 0.7449186991869918,
+    "fpr": 0.39183673469387753,
+    "threshold": -0.08857449889183044,
+    "score_inverted": true,
+    "best_val_auc": 0.6564655744440844
+  },
+  "comparison_table": [
+    {
+      "config": "Dense AE (this notebook)",
+      "roc_auc": 0.662445756914398,
+      "pr_auc": 0.46294802768123583,
+      "f1": 0.626228107646305,
+      "mcc": 0.34358324558109066,
+      "precision": 0.5401621223286662,
+      "recall": 0.7449186991869918,
+      "fpr": 0.39183673469387753,
+      "source": "mdc_baselines.ipynb"
+    },
+    {
+      "config": "Isolation Forest (mean_max pool)",
+      "roc_auc": 0.6741490217099974,
+      "pr_auc": 0.44636913494303915,
+      "f1": 0.710387323943662,
+      "mcc": 0.5034251465813259,
+      "precision": 0.6265527950310559,
+      "recall": 0.8201219512195121,
+      "fpr": 0.3020408163265306,
+      "source": "mdc_drift_aware.ipynb"
+    },
+    {
+      "config": "vNext default (Transformer AE)",
+      "roc_auc": 0.6889160636111856,
+      "pr_auc": 0.5086027803151792,
+      "f1": 0.6603424340583064,
+      "mcc": 0.4233525383108315,
+      "precision": 0.6062022090059473,
+      "recall": 0.7251016260162602,
+      "fpr": 0.2910518053375196,
+      "source": "mdc_model_vNext.ipynb"
+    },
+    {
+      "config": "vNext HPO best (Transformer AE)",
+      "roc_auc": 0.8446074395987289,
+      "pr_auc": 0.7075289458954636,
+      "f1": 0.8030176026823135,
+      "mcc": 0.7080336529836047,
+      "precision": 0.8919925512104283,
+      "recall": 0.7301829268292683,
+      "fpr": 0.054631083202511775,
+      "source": "mdc_model_vNext.ipynb"
+    }
+  ],
+  "protocol": {
+    "same_windows_vnext_npz": true,
+    "threshold_rule": "f1_optimal_on_val",
+    "auto_score_flip": true
+  }
+}

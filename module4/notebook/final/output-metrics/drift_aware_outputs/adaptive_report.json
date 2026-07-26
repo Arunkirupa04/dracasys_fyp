@@ -1,0 +1,270 @@
+{
+  "score_invert_production": true,
+  "alert_invert": false,
+  "alert_space": true,
+  "threshold_provenance": {
+    "thr_raw": -0.19924625754356384,
+    "primary": "f1_optimal",
+    "source": "metrics_vnext.json:test_default.f1_optimal.threshold",
+    "offline_roc_auc": 0.6889160636111856,
+    "offline_f1": 0.6603424340583064,
+    "offline_mcc": 0.4233525383108315,
+    "offline_recall": 0.7251016260162602,
+    "offline_fpr": 0.2910518053375196,
+    "offline_precision": 0.6062022090059473
+  },
+  "threshold_integrity": {
+    "test_set": {
+      "ok": true,
+      "pass_sane_fpr": true,
+      "pass_f1_match": true,
+      "pass_fpr_match": true,
+      "observed": {
+        "roc_auc": 0.6889160636111856,
+        "pr_auc": 0.5086027803151792,
+        "f1": 0.6603424340583064,
+        "precision": 0.6062022090059473,
+        "recall": 0.7251016260162602,
+        "mcc": 0.4233525383108315,
+        "bal_acc": 0.7170249103393702,
+        "fpr": 0.2910518053375196,
+        "fnr": 0.27489837398373984,
+        "thr_raw": -0.19924625754356384,
+        "thr_alert": -0.19924625754356384
+      }
+    },
+    "stream_order": {
+      "ok": true,
+      "pass_sane_fpr": true,
+      "observed": {
+        "roc_auc": 0.6889160636111856,
+        "pr_auc": 0.5086027803151792,
+        "f1": 0.6603424340583064,
+        "precision": 0.6062022090059473,
+        "recall": 0.7251016260162602,
+        "mcc": 0.4233525383108315,
+        "bal_acc": 0.7170249103393702,
+        "fpr": 0.2910518053375196,
+        "fnr": 0.27489837398373984,
+        "thr_raw": -0.19924625754356384,
+        "thr_alert": -0.19924625754356384
+      }
+    }
+  },
+  "stream_ordering": {
+    "ordering_mode": "timestamp",
+    "n_windows": 5153,
+    "note": "Simulated streaming replay \u2014 not live deployment. See thesis_drift_aware_notes.md for interpretation."
+  },
+  "alpha": 2.5,
+  "buffer_size": 500,
+  "update_every": 20,
+  "fixed_global": {
+    "roc_auc": 0.6889160636111856,
+    "pr_auc": 0.5086027803151792,
+    "f1": 0.6603424340583064,
+    "precision": 0.6062022090059473,
+    "recall": 0.7251016260162602,
+    "mcc": 0.4233525383108315,
+    "bal_acc": 0.7170249103393702,
+    "fpr": 0.2910518053375196,
+    "fnr": 0.27489837398373984,
+    "thr_raw": -0.19924625754356384,
+    "thr_alert": -0.19924625754356384
+  },
+  "adaptive_global": {
+    "f1": 0.0,
+    "mcc": 0.0,
+    "recall": 0.0
+  },
+  "fixed_first_half": {
+    "fpr": 0.2481409001956947,
+    "fnr": 1.0,
+    "recall": 0.0,
+    "precision": 0.0,
+    "f1": 0.0,
+    "mcc": -0.05180053095543996
+  },
+  "fixed_last_half": {
+    "fpr": 0.4650793650793651,
+    "fnr": 0.2670775552131484,
+    "recall": 0.7329224447868515,
+    "precision": 0.8296511627906977,
+    "f1": 0.7782928824652304,
+    "mcc": 0.24433126640502972
+  },
+  "adaptive_first_half": {
+    "fpr": 0.0,
+    "fnr": 1.0,
+    "recall": 0.0,
+    "precision": 0.0,
+    "f1": 0.0,
+    "mcc": 0.0
+  },
+  "adaptive_last_half": {
+    "fpr": 0.0,
+    "fnr": 1.0,
+    "recall": 0.0,
+    "precision": 0.0,
+    "f1": 0.0,
+    "mcc": 0.0
+  },
+  "fpr_reduction_last_half": 0.4650793650793651,
+  "f1_gain_last_half": -0.7782928824652304,
+  "recall_delta_last_half": -0.7329224447868515,
+  "matched_policy_comparison": {
+    "slice": "last_half",
+    "natural": {
+      "fixed": {
+        "fpr": 0.4650793650793651,
+        "fnr": 0.2670775552131484,
+        "recall": 0.7329224447868515,
+        "precision": 0.8296511627906977,
+        "f1": 0.7782928824652304,
+        "mcc": 0.24433126640502972
+      },
+      "adaptive": {
+        "fpr": 0.0,
+        "fnr": 1.0,
+        "recall": 0.0,
+        "precision": 0.0,
+        "f1": 0.0,
+        "mcc": 0.0
+      },
+      "fpr_reduction": 0.4650793650793651,
+      "f1_gain": -0.7782928824652304,
+      "recall_delta": -0.7329224447868515
+    },
+    "roc_operating_points_last_half": {
+      "fpr_5": {
+        "target_fpr": 0.05,
+        "fixed_recall": 0.7329224447868515,
+        "fixed_fpr": 0.4650793650793651,
+        "fixed_f1": 0.7782928824652304,
+        "fixed_mcc": 0.24433126640502972,
+        "roc_recall_at_target_fpr": 0.00667693888032871,
+        "roc_f1_at_target_fpr": 0.013085052843482638,
+        "roc_mcc_at_target_fpr": -0.12578649974775602,
+        "roc_achieved_fpr": 0.04285714285714286,
+        "roc_thr_raw": -0.1086839884519577
+      },
+      "fpr_10": {
+        "target_fpr": 0.1,
+        "fixed_recall": 0.7329224447868515,
+        "fixed_fpr": 0.4650793650793651,
+        "fixed_f1": 0.7782928824652304,
+        "fixed_mcc": 0.24433126640502972,
+        "roc_recall_at_target_fpr": 0.014894709809964048,
+        "roc_f1_at_target_fpr": 0.02845927379784102,
+        "roc_mcc_at_target_fpr": -0.19447421121390973,
+        "roc_achieved_fpr": 0.09841269841269841,
+        "roc_thr_raw": -0.11943639814853668
+      },
+      "fpr_25": {
+        "target_fpr": 0.25,
+        "fixed_recall": 0.7329224447868515,
+        "fixed_fpr": 0.4650793650793651,
+        "fixed_f1": 0.7782928824652304,
+        "fixed_mcc": 0.24433126640502972,
+        "roc_recall_at_target_fpr": 0.31432973805855163,
+        "roc_f1_at_target_fpr": 0.45066273932253315,
+        "roc_mcc_at_target_fpr": 0.061168504066148016,
+        "roc_achieved_fpr": 0.2492063492063492,
+        "roc_thr_raw": -0.14952600002288818
+      }
+    },
+    "fixed_retuned_to_adaptive_fpr": {
+      "target_fpr": 0.0,
+      "thr_raw": -0.16585099697113037,
+      "thr_alert": -0.16585099697113037,
+      "achieved_fpr": 0.3253968253968254,
+      "recall": 0.556753980482794,
+      "f1": 0.6699629171817059,
+      "mcc": 0.1988619966515654,
+      "precision": 0.8409619860356866,
+      "roc_tpr_at_index": 0.0
+    },
+    "alpha_matched_to_fixed_fpr": {
+      "alpha": 1.5,
+      "adaptive_fpr": 0.0,
+      "adaptive_recall": 0.0,
+      "adaptive_f1": 0.0,
+      "fixed_fpr": 0.4650793650793651,
+      "fixed_recall": 0.7329224447868515,
+      "fixed_f1": 0.7782928824652304,
+      "fpr_gap": 0.4650793650793651,
+      "f1_delta": -0.7782928824652304,
+      "recall_delta": -0.7329224447868515,
+      "note": "Compare F1/recall only when fpr_gap is small; otherwise report as unmatched trade-off."
+    },
+    "claim_adaptive_improves_without_recall_loss": false,
+    "interpretation": "tradeoff_or_negative \u2014 report F1/recall/MCC; do not claim FPR reduction alone"
+  },
+  "matched_recall_at_fpr_5": {
+    "target_fpr": 0.05,
+    "fixed_recall": 0.7251016260162602,
+    "fixed_fpr": 0.2910518053375196,
+    "fixed_f1": 0.6603424340583064,
+    "fixed_mcc": 0.4233525383108315,
+    "roc_recall_at_target_fpr": 0.008130081300813009,
+    "roc_f1_at_target_fpr": 0.014904517931998137,
+    "roc_mcc_at_target_fpr": -0.11421783000223557,
+    "roc_achieved_fpr": 0.05117739403453689,
+    "roc_thr_raw": -0.11507826298475266
+  },
+  "matched_recall_at_fpr_10": {
+    "target_fpr": 0.1,
+    "fixed_recall": 0.7251016260162602,
+    "fixed_fpr": 0.2910518053375196,
+    "fixed_f1": 0.6603424340583064,
+    "fixed_mcc": 0.4233525383108315,
+    "roc_recall_at_target_fpr": 0.15396341463414634,
+    "roc_f1_at_target_fpr": 0.23406720741599074,
+    "roc_mcc_at_target_fpr": 0.08076766294670394,
+    "roc_achieved_fpr": 0.09984301412872841,
+    "roc_thr_raw": -0.13635693490505219
+  },
+  "matched_recall_at_fpr_25": {
+    "target_fpr": 0.25,
+    "fixed_recall": 0.7251016260162602,
+    "fixed_fpr": 0.2910518053375196,
+    "fixed_f1": 0.6603424340583064,
+    "fixed_mcc": 0.4233525383108315,
+    "roc_recall_at_target_fpr": 0.679369918699187,
+    "roc_f1_at_target_fpr": 0.6520360887588393,
+    "roc_mcc_at_target_fpr": 0.4236228395451211,
+    "roc_achieved_fpr": 0.2499215070643642,
+    "roc_thr_raw": -0.18379256129264832
+  },
+  "alpha_sweep": [
+    {
+      "alpha": 1.5,
+      "f1_last_half": 0.0,
+      "fpr_last_half": 0.0,
+      "recall_last_half": 0.0,
+      "f1_gain_last_half": -0.7782928824652304
+    },
+    {
+      "alpha": 2.0,
+      "f1_last_half": 0.0,
+      "fpr_last_half": 0.0,
+      "recall_last_half": 0.0,
+      "f1_gain_last_half": -0.7782928824652304
+    },
+    {
+      "alpha": 2.5,
+      "f1_last_half": 0.0,
+      "fpr_last_half": 0.0,
+      "recall_last_half": 0.0,
+      "f1_gain_last_half": -0.7782928824652304
+    },
+    {
+      "alpha": 3.0,
+      "f1_last_half": 0.0,
+      "fpr_last_half": 0.0,
+      "recall_last_half": 0.0,
+      "f1_gain_last_half": -0.7782928824652304
+    }
+  ],
+  "best_alpha_by_f1_last_half": 1.5
+}

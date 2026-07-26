@@ -1,0 +1,65 @@
+{
+  "version": "vnext",
+  "created_at": "2026-07-25T19:21:49.582323+00:00",
+  "random_state": 42,
+  "scaler_type": "StandardScaler+clip(flow & bucket)",
+  "bucket_agg": "mean_max_std",
+  "post_scale_clip": 10.0,
+  "attack_frac_threshold": 0.5,
+  "max_gap_buckets": 4,
+  "shapes": {
+    "X_train": [
+      16795,
+      10,
+      163
+    ],
+    "X_val": [
+      5153,
+      10,
+      163
+    ],
+    "X_test": [
+      5153,
+      10,
+      163
+    ]
+  },
+  "attack_rates": {
+    "val": 0.38210751018823985,
+    "test": 0.38191344847661557
+  },
+  "window_timestamps": true,
+  "ts_test_unix_range": [
+    1679230305,
+    1715107245
+  ],
+  "window_size": 10,
+  "stride": 2,
+  "bucket_freq": "15s",
+  "features_per_bucket": 163,
+  "scale_stats": {
+    "mean_abs": 0.7010194063186646,
+    "max_abs": 8.786130905151367,
+    "nan": false
+  },
+  "leakage_free": true,
+  "multiclass_labels": true,
+  "multiclass_labels_val_unique": [
+    0,
+    1,
+    2,
+    3,
+    4,
+    8,
+    11
+  ],
+  "multiclass_labels_test_unique": [
+    0,
+    1,
+    2,
+    3,
+    4,
+    8,
+    11
+  ]
+}

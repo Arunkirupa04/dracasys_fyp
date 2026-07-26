@@ -1,0 +1,46 @@
+{
+  "task": 4,
+  "created_at": "2026-07-26T06:13:43.157180+00:00",
+  "version": "drift_aware_v2",
+  "freeze_ready": true,
+  "legacy_run": "notebook/run/mdc_drift_aware_output.ipynb",
+  "target_freeze_path": "notebook/run/mdc_drift_aware_output_v2.ipynb",
+  "out_dir": "/kaggle/working/drift_aware",
+  "fig_dir": "/kaggle/working/drift_aware/thesis_figures_300dpi",
+  "gates": {
+    "threshold_integrity_ok": true,
+    "alert_invert_is_false": true,
+    "thr_fixed_near_offline": false,
+    "fixed_stream_fpr_sane": true,
+    "matched_policy_present": true,
+    "ordering_mode": "timestamp",
+    "ordering_is_timestamp": true,
+    "claim_adaptive_ok": false
+  },
+  "threshold_provenance": {
+    "thr_raw": -0.19924625754356384,
+    "primary": "f1_optimal",
+    "source": "metrics_vnext.json:test_default.f1_optimal.threshold",
+    "offline_roc_auc": 0.6889160636111856,
+    "offline_f1": 0.6603424340583064,
+    "offline_mcc": 0.4233525383108315,
+    "offline_recall": 0.7251016260162602,
+    "offline_fpr": 0.2910518053375196,
+    "offline_precision": 0.6062022090059473
+  },
+  "headline_metrics_locked": {
+    "methods_default_roc": 0.7402,
+    "abstract_multiseed_roc": "0.7529 +/- 0.023",
+    "best_case_hpo_roc": 0.8138,
+    "source": "docs/claim_evidence_matrix.md"
+  },
+  "missing_artifacts": [],
+  "missing_figures": [],
+  "do_not_cite": [
+    "v1 fpr_reduction_last_half ~ 0.92",
+    "v1 fixed stream FPR ~ 0.97",
+    "fine-tune improves detection",
+    "live temporal deployment validated"
+  ],
+  "interpretation": "tradeoff_or_negative \u2014 report F1/recall/MCC; do not claim FPR reduction alone"
+}
