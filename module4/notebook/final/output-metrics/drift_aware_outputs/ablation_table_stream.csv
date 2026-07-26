@@ -1,0 +1,4 @@
+config,roc_auc,f1,recall,mcc,fpr,fpr_last_half,f1_last_half,recall_last_half,thr_raw,source,mcc_last_half,f1_gain_last_half,recall_delta_last_half,fpr_reduction_last_half,claim_ok,interpretation,auc_before,auc_after,auc_delta
+Fixed threshold (stream),0.6889160636111856,0.6603424340583064,0.7251016260162602,0.4233525383108315,0.2910518053375196,0.4650793650793651,0.7782928824652304,0.7329224447868515,-0.19924625754356384,§5 stream (offline thr),,,,,,,,,
+Adaptive threshold (stream),,,,,,0.0,0.0,0.0,,§5 adaptive,0.0,-0.7782928824652304,-0.7329224447868515,0.4650793650793651,False,tradeoff_or_negative — report F1/recall/MCC; do not claim FPR reduction alone,,,
+Fine-tune on drift slice,,,,,,,,,,§6 fine-tune,,,,,,,,,

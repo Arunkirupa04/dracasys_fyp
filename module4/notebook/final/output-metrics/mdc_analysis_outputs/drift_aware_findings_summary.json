@@ -1,0 +1,12 @@
+{
+  "adaptive_threshold_claim_ok": false,
+  "adaptive_threshold_interpretation": "tradeoff_or_negative \u2014 report F1/recall/MCC; do not claim FPR reduction alone",
+  "finetune_source": "stable_slice_fallback",
+  "finetune_auc_before": NaN,
+  "finetune_auc_after": NaN,
+  "finetune_auc_delta": NaN,
+  "finetune_interpretation": "positive_delta",
+  "freeze_ready": true,
+  "ordering_mode": "timestamp",
+  "stream_ordering": "timestamp"
+}

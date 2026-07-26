@@ -1,0 +1,88 @@
+{
+  "slice": "last_half",
+  "natural": {
+    "fixed": {
+      "fpr": 0.4650793650793651,
+      "fnr": 0.2670775552131484,
+      "recall": 0.7329224447868515,
+      "precision": 0.8296511627906977,
+      "f1": 0.7782928824652304,
+      "mcc": 0.24433126640502972
+    },
+    "adaptive": {
+      "fpr": 0.0,
+      "fnr": 1.0,
+      "recall": 0.0,
+      "precision": 0.0,
+      "f1": 0.0,
+      "mcc": 0.0
+    },
+    "fpr_reduction": 0.4650793650793651,
+    "f1_gain": -0.7782928824652304,
+    "recall_delta": -0.7329224447868515
+  },
+  "roc_operating_points_last_half": {
+    "fpr_5": {
+      "target_fpr": 0.05,
+      "fixed_recall": 0.7329224447868515,
+      "fixed_fpr": 0.4650793650793651,
+      "fixed_f1": 0.7782928824652304,
+      "fixed_mcc": 0.24433126640502972,
+      "roc_recall_at_target_fpr": 0.00667693888032871,
+      "roc_f1_at_target_fpr": 0.013085052843482638,
+      "roc_mcc_at_target_fpr": -0.12578649974775602,
+      "roc_achieved_fpr": 0.04285714285714286,
+      "roc_thr_raw": -0.1086839884519577
+    },
+    "fpr_10": {
+      "target_fpr": 0.1,
+      "fixed_recall": 0.7329224447868515,
+      "fixed_fpr": 0.4650793650793651,
+      "fixed_f1": 0.7782928824652304,
+      "fixed_mcc": 0.24433126640502972,
+      "roc_recall_at_target_fpr": 0.014894709809964048,
+      "roc_f1_at_target_fpr": 0.02845927379784102,
+      "roc_mcc_at_target_fpr": -0.19447421121390973,
+      "roc_achieved_fpr": 0.09841269841269841,
+      "roc_thr_raw": -0.11943639814853668
+    },
+    "fpr_25": {
+      "target_fpr": 0.25,
+      "fixed_recall": 0.7329224447868515,
+      "fixed_fpr": 0.4650793650793651,
+      "fixed_f1": 0.7782928824652304,
+      "fixed_mcc": 0.24433126640502972,
+      "roc_recall_at_target_fpr": 0.31432973805855163,
+      "roc_f1_at_target_fpr": 0.45066273932253315,
+      "roc_mcc_at_target_fpr": 0.061168504066148016,
+      "roc_achieved_fpr": 0.2492063492063492,
+      "roc_thr_raw": -0.14952600002288818
+    }
+  },
+  "fixed_retuned_to_adaptive_fpr": {
+    "target_fpr": 0.0,
+    "thr_raw": -0.16585099697113037,
+    "thr_alert": -0.16585099697113037,
+    "achieved_fpr": 0.3253968253968254,
+    "recall": 0.556753980482794,
+    "f1": 0.6699629171817059,
+    "mcc": 0.1988619966515654,
+    "precision": 0.8409619860356866,
+    "roc_tpr_at_index": 0.0
+  },
+  "alpha_matched_to_fixed_fpr": {
+    "alpha": 1.5,
+    "adaptive_fpr": 0.0,
+    "adaptive_recall": 0.0,
+    "adaptive_f1": 0.0,
+    "fixed_fpr": 0.4650793650793651,
+    "fixed_recall": 0.7329224447868515,
+    "fixed_f1": 0.7782928824652304,
+    "fpr_gap": 0.4650793650793651,
+    "f1_delta": -0.7782928824652304,
+    "recall_delta": -0.7329224447868515,
+    "note": "Compare F1/recall only when fpr_gap is small; otherwise report as unmatched trade-off."
+  },
+  "claim_adaptive_improves_without_recall_loss": false,
+  "interpretation": "tradeoff_or_negative \u2014 report F1/recall/MCC; do not claim FPR reduction alone"
+}
