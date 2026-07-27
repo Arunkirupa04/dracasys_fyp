@@ -17,14 +17,13 @@ from pathlib import Path
 
 import numpy as np
 
-from backend.config import MODEL_PATHS
-from backend.data.m3_window_generator import generate_windows
+from backend.config import MODEL_PATHS, N_DEMO_SAMPLES
+from backend.data.m3_window_generator import ANOMALY_PLAN, generate_windows
 
-ANOMALY_TYPES = {
-    0: None,
-    1: None,
-    2: "Memory Leak — memory usage spike detected",
-    3: "CPU Saturation — CPU rate spike + memory elevation",
+ANOMALY_DESCRIPTIONS = {
+    "mem_leak": "Memory Leak — memory usage drifting upward",
+    "cpu_sat":  "CPU Saturation — CPU rate spike + memory elevation",
+    "severe":   "Combined System Degradation — CPU + memory critical",
 }
 
 
@@ -41,7 +40,7 @@ class Module3Detector:
         self._detector = VAEAloneDetector.load(str(bundle_path))
 
         # Pre-generate calibrated demo windows (M3's own unit convention)
-        self._demo_windows = generate_windows()
+        self._demo_windows = generate_windows(n=N_DEMO_SAMPLES)
 
         print(f"[M3] Loaded VAEAloneDetector — threshold={self._detector.threshold:.5f}")
         # Quick verification
@@ -52,12 +51,13 @@ class Module3Detector:
     # ------------------------------------------------------------------
     def detect(self, sample_index: int) -> dict:
         """
-        sample_index : 0-based (0..3 for the 4 demo samples).
+        sample_index : 0-based (0..N_DEMO_SAMPLES-1).
         Uses pre-generated calibrated windows so M3 behaves correctly.
         """
         window = self._demo_windows[sample_index]   # (30, 7)
         result = self._detector.score(window)
         is_anom = bool(result["is_anomaly"])
+        plan_key = ANOMALY_PLAN.get(sample_index, (None, None))[0]
 
         return {
             "module":             "m3",
@@ -66,5 +66,5 @@ class Module3Detector:
             "is_anomaly":         is_anom,
             "reconstruction_mse": round(float(result["reconstruction_mse"]), 6),
             "threshold":          round(float(result["threshold_used"]), 6),
-            "anomaly_type":       ANOMALY_TYPES.get(sample_index) if is_anom else None,
+            "anomaly_type":       ANOMALY_DESCRIPTIONS.get(plan_key) if is_anom else None,
         }

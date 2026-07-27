@@ -1,0 +1,152 @@
+{
+  "app": {
+    "name": "DracaSys",
+    "subtitle": "Intelligent Deployment Helper — Live Demo",
+    "description": "Parallel inference across four ML modules on live container telemetry. Each module runs independently — no output feeds another."
+  },
+  "demo": {
+    "n_demo_samples": 10,
+    "n_history_rows": 1000,
+    "demo_delay_seconds": 4.0,
+    "m2_window": 1000,
+    "m3_window": 30,
+    "m4_window_steps": 10,
+    "m4_features": 163
+  },
+  "services": {
+    "integration_port": 5000,
+    "module1_port": 8000,
+    "frontend_port": 5173,
+    "module1_base_url": "http://localhost:8000"
+  },
+  "ui": {
+    "horizon_labels": { "h1": "15s", "h2": "30s", "h3": "45s" },
+    "horizon_seconds": { "h1": 15, "h2": 30, "h3": 45 },
+    "stream_hints": {
+      "idle": "{samples} samples · 4 modules · M1 forecast fires once, in parallel",
+      "running": "Streaming live data through all models…",
+      "stopped": "Stream stopped. Click Reset to clear, or Start to run again.",
+      "complete": "Stream complete. Click Reset to run again.",
+      "error": "Connection error — ensure the integration backend is running on :{port}"
+    },
+    "layers": {
+      "prediction": { "label": "Prediction Layer", "color": "accent" },
+      "anomaly": { "label": "Anomaly Detection Layer", "color": "red" }
+    }
+  },
+  "modules": {
+    "m1": {
+      "id": "M1",
+      "title": "Long-Term Forecasting",
+      "subtitle": "Prophet + GRU — 24h CPU Forecast",
+      "layer": "prediction",
+      "model_artifact": "hybrid_v1",
+      "approach": "Hybrid decomposition: Prophet captures trend and daily seasonality per container; a GRU residual model corrects Prophet errors. Prophet is refit on each request from the supplied history.",
+      "inputs": {
+        "metric": "CPU utilization (%)",
+        "interval": "15 minutes",
+        "min_history_steps": 200,
+        "recommended_history_steps": 672,
+        "forecast_horizon_steps": 96
+      },
+      "outputs": {
+        "primary": "predicted_cpu_percent (96 steps = 24h)",
+        "components": ["prophet_component_percent", "gru_residual_component_percent"]
+      },
+      "validation_metrics": [
+        { "label": "MAE (unseen holdout)", "value": "0.35%" },
+        { "label": "RMSE (unseen holdout)", "value": "0.47%" },
+        { "label": "MAPE (unseen holdout)", "value": "0.52%" },
+        { "label": "Eval cohort", "value": "Unseen containers, scaler mode new" }
+      ],
+      "key_details": [
+        "672-step (7-day) history recommended for best Prophet fit",
+        "5–30 s latency per request (Prophet refit at inference)",
+        "CPU percent only — not derived from the 15 s M2/M3 demo stream"
+      ]
+    },
+    "m2": {
+      "id": "M2",
+      "title": "Short-Term Prediction",
+      "subtitle": "Adaptive GRU — CPU & Memory",
+      "layer": "prediction",
+      "model_artifact": "production_model.pt",
+      "approach": "Three horizon-specific AdaptiveGRU models (H1/H2/H3) forecast four resource targets from a 1000-step window of 27 engineered features (7 raw metrics + lag/rolling features).",
+      "inputs": {
+        "metrics": "7 container counters/gauges at 15 s intervals",
+        "window_rows": 1000,
+        "feature_count": 27
+      },
+      "outputs": {
+        "targets": ["cpu_usage", "mem_usage_mb", "mem_wss_mb", "mem_rss_mb"],
+        "horizons": ["15s (H1)", "30s (H2)", "45s (H3)"]
+      },
+      "validation_metrics": [
+        { "label": "H1 mem MAPE", "value": "0.164%" },
+        { "label": "H2 mem MAPE", "value": "0.247%" },
+        { "label": "H3 mem MAPE", "value": "0.311%" },
+        { "label": "Streaming H1 overall", "value": "0.118%" }
+      ],
+      "key_details": [
+        "15-second sampling required — model trained exclusively at this cadence",
+        "Frozen normalization stats from training bundle — never recompute live",
+        "Forecasts compared against streamed actual readings in the demo"
+      ]
+    },
+    "m3": {
+      "id": "M3",
+      "title": "System Anomaly Detector",
+      "subtitle": "Variational Autoencoder (VAE)",
+      "layer": "anomaly",
+      "model_artifact": "vae_cc1_final_model.pt",
+      "approach": "VAE-alone scorer: 30×7 metric window → scale → PCA → VAE reconstruction. Anomaly when reconstruction MSE exceeds a fixed calibrated threshold.",
+      "inputs": {
+        "window_shape": "30 × 7",
+        "interval": "15 seconds",
+        "features": "CPU rate + 6 memory gauges"
+      },
+      "outputs": {
+        "score": "reconstruction_mse",
+        "decision": "is_anomaly (MSE > threshold)"
+      },
+      "validation_metrics": [
+        { "label": "PR-AUC (in-distribution)", "value": "0.601" },
+        { "label": "F1 (cc1_test)", "value": "0.618" },
+        { "label": "Precision", "value": "0.630" },
+        { "label": "Threshold (val_p99)", "value": "0.0980" }
+      ],
+      "key_details": [
+        "Detects CPU saturation, memory leaks, pod failures",
+        "Stateless — same input always produces same score",
+        "No network-fault detection (CPU/memory only)"
+      ]
+    },
+    "m4": {
+      "id": "M4",
+      "title": "Security Anomaly Detector",
+      "subtitle": "Sequence Bottleneck Autoencoder",
+      "layer": "anomaly",
+      "model_artifact": "model_hpo_best_vnext.pt",
+      "approach": "Unsupervised Sequence Bottleneck AE trained on benign CICFlowMeter windows. Attack traffic reconstructs poorly → higher anomaly score.",
+      "inputs": {
+        "window_shape": "10 × 163",
+        "source": "CICFlowMeter network flow features"
+      },
+      "outputs": {
+        "score": "reconstruction-based anomaly score",
+        "decision": "is_anomaly (score ≥ threshold)"
+      },
+      "validation_metrics": [
+        { "label": "ROC-AUC (held-out)", "value": "0.8446" },
+        { "label": "F1 (held-out)", "value": "0.8030" },
+        { "label": "Threshold (HPO_best)", "value": "-0.3475" },
+        { "label": "Architecture", "value": "d_model=64, bottleneck=16" }
+      ],
+      "key_details": [
+        "Higher score = more anomalous (invert=True convention)",
+        "Benign-only training — no attack labels required",
+        "Demo uses real verified attack window from test set (CVE-2020-13379)"
+      ]
+    }
+  }
+}

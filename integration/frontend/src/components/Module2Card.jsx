@@ -1,91 +1,166 @@
 import ModuleCard from './ModuleCard'
+import { ActualPredictedChart, GroupedBarChart } from './charts'
+import { moduleConfig } from '../hooks/useConfig'
 
-const HORIZON_LABELS = { h1: '15 s ahead', h2: '30 s ahead', h3: '45 s ahead' }
-
-export default function Module2Card({ data }) {
+export default function Module2Card({ data, history = [], config }) {
+  const mod = moduleConfig(config, 'm2')
   const result = data.result
   const horizons = result?.horizons
+  const hLabels = config?.ui?.horizon_labels || { h1: '15s', h2: '30s', h3: '45s' }
+  const horizonKeys = ['h1', 'h2', 'h3']
+
+  const actualMem = history.map((r) => r.actual?.mem_usage_mb)
+  const actualCpu = history.map((r) => r.actual?.cpu_usage)
+  const predictedMemTail = result
+    ? horizonKeys.map((h) => result.horizons[h]?.mem_usage_mb)
+    : []
+  const predictedCpuTail = result
+    ? horizonKeys.map((h) => result.horizons[h]?.cpu_usage)
+    : []
+
+  const latestActual = result?.actual
 
   return (
     <ModuleCard
-      moduleId="M2"
-      title="Short-Term Prediction"
-      subtitle="Adaptive GRU — CPU & Memory"
-      layer="Prediction Layer"
+      moduleId={mod.id}
+      title={mod.title}
+      subtitle={mod.subtitle}
+      layer={config?.ui?.layers?.prediction?.label}
       layerColor="var(--accent)"
       status={data.status}
-      isAnomaly={false}
     >
       {!horizons ? (
-        <Placeholder />
+        <Placeholder mod={mod} />
       ) : (
-        <div style={styles.horizonsWrap}>
-          {Object.entries(horizons).map(([key, h]) => (
-            <HorizonBlock key={key} label={HORIZON_LABELS[key]} h={h} />
-          ))}
-        </div>
-      )}
-      {result && (
-        <div style={styles.footer}>
-          Sample {result.sample} — 3 horizon forecasts
-        </div>
+        <>
+          <div style={styles.metricsRow}>
+            <Metric label="Actual CPU now" value={`${latestActual?.cpu_usage?.toFixed(1)} s`} />
+            <Metric label="Actual Mem now" value={`${latestActual?.mem_usage_mb?.toFixed(1)} MB`} highlight />
+            <Metric label="H1 forecast Mem" value={`${horizons.h1.mem_usage_mb.toFixed(1)} MB`} />
+            <Metric label="Sample" value={`#${result.sample}`} />
+          </div>
+
+          <div className="detail-chart-grid" style={styles.chartGrid}>
+            <ActualPredictedChart
+              title="Memory — Actual Stream vs H1/H2/H3 Forecast"
+              yLabel="Memory (MB)"
+              unit=" MB"
+              actual={actualMem}
+              predicted={predictedMemTail}
+              actualLabel="Actual (streamed samples)"
+              predictedLabel="Forecast tail (H1→H3)"
+              width={640}
+              height={260}
+            />
+            <ActualPredictedChart
+              title="CPU Usage — Actual Stream vs Forecast"
+              yLabel="CPU (seconds)"
+              actual={actualCpu}
+              predicted={predictedCpuTail}
+              actualLabel="Actual (streamed)"
+              predictedLabel="Forecast (H1→H3)"
+              width={640}
+              height={260}
+            />
+          </div>
+
+          <GroupedBarChart
+            title="Current Sample — Actual vs H1 Forecast by Metric"
+            yLabel="Value"
+            categories={['CPU (s)', 'Mem (MB)', 'WSS (MB)', 'RSS (MB)']}
+            actual={[
+              latestActual?.cpu_usage,
+              latestActual?.mem_usage_mb,
+              latestActual?.mem_wss_mb,
+              latestActual?.mem_rss_mb,
+            ]}
+            predicted={[
+              horizons.h1.cpu_usage,
+              horizons.h1.mem_usage_mb,
+              horizons.h1.mem_wss_mb,
+              horizons.h1.mem_rss_mb,
+            ]}
+            actualLabel="Actual (now)"
+            predictedLabel="Predicted H1"
+            width={640}
+            height={240}
+          />
+
+          <table style={styles.table}>
+            <thead>
+              <tr>
+                <th style={styles.th}>Metric</th>
+                <th style={styles.th}>Actual (now)</th>
+                {horizonKeys.map((h) => (
+                  <th key={h} style={styles.th}>{hLabels[h]}</th>
+                ))}
+              </tr>
+            </thead>
+            <tbody>
+              {[
+                { key: 'cpu_usage', label: 'CPU (s)', fmt: (v) => v?.toFixed(1), actual: latestActual?.cpu_usage },
+                { key: 'mem_usage_mb', label: 'Mem (MB)', fmt: (v) => v?.toFixed(1), actual: latestActual?.mem_usage_mb },
+                { key: 'mem_wss_mb', label: 'WSS (MB)', fmt: (v) => v?.toFixed(1), actual: latestActual?.mem_wss_mb },
+                { key: 'mem_rss_mb', label: 'RSS (MB)', fmt: (v) => v?.toFixed(1), actual: latestActual?.mem_rss_mb },
+              ].map(({ key, label, fmt, actual }) => (
+                <tr key={key}>
+                  <td style={styles.tdLabel}>{label}</td>
+                  <td style={{ ...styles.td, color: 'var(--text)' }}>{fmt(actual)}</td>
+                  {horizonKeys.map((h) => (
+                    <td key={h} style={styles.td}>{fmt(horizons[h][key])}</td>
+                  ))}
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </>
       )}
     </ModuleCard>
   )
 }
 
-function HorizonBlock({ label, h }) {
+function Metric({ label, value, highlight }) {
   return (
-    <div style={styles.hBlock}>
-      <div style={styles.hLabel}>{label}</div>
-      <MetricRow icon="⚡" name="CPU" value={`${h.cpu_usage?.toFixed(1)} s`} />
-      <MetricRow icon="💾" name="Memory" value={`${h.mem_usage_mb?.toFixed(1)} MB`} />
-      <MetricRow icon="📊" name="WSS" value={`${h.mem_wss_mb?.toFixed(1)} MB`} />
-      <MetricRow icon="🗃" name="RSS" value={`${h.mem_rss_mb?.toFixed(1)} MB`} />
+    <div style={styles.metric}>
+      <div style={{ ...styles.metricVal, color: highlight ? 'var(--accent)' : 'var(--text)' }}>{value}</div>
+      <div style={styles.metricLabel}>{label}</div>
     </div>
   )
 }
 
-function MetricRow({ icon, name, value }) {
-  return (
-    <div style={styles.metricRow}>
-      <span style={styles.metricIcon}>{icon}</span>
-      <span style={styles.metricName}>{name}</span>
-      <span style={styles.metricVal}>{value}</span>
-    </div>
-  )
-}
-
-function Placeholder() {
+function Placeholder({ mod }) {
   return (
     <div style={styles.placeholder}>
       <div style={styles.phIcon}>📈</div>
       <div style={styles.phText}>Waiting for stream data</div>
-      <div style={styles.phSub}>Will forecast CPU & memory at 15 s / 30 s / 45 s horizons</div>
+      <div style={styles.phSub}>
+        Forecasts {mod?.outputs?.targets?.join(', ')} at {mod?.outputs?.horizons?.join(', ')}
+      </div>
     </div>
   )
 }
 
 const styles = {
-  horizonsWrap: { display: 'flex', flexDirection: 'column', gap: 12 },
-  hBlock: {
-    background: 'var(--surface2)', borderRadius: 8, padding: '10px 12px',
-    border: '1px solid var(--border)',
+  metricsRow: { display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 12, marginBottom: 16 },
+  metric: { background: 'var(--surface2)', borderRadius: 8, padding: '12px 14px', border: '1px solid var(--border)' },
+  metricVal: { fontSize: 18, fontWeight: 700, fontFamily: 'var(--mono)' },
+  metricLabel: { fontSize: 10, color: 'var(--text-muted)', marginTop: 4, textTransform: 'uppercase' },
+  chartGrid: { display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16, marginBottom: 8 },
+  table: { width: '100%', borderCollapse: 'collapse', marginTop: 12 },
+  th: {
+    fontSize: 10, fontWeight: 700, color: 'var(--accent)', textAlign: 'right',
+    padding: '8px 6px', textTransform: 'uppercase', borderBottom: '1px solid var(--border)',
   },
-  hLabel: {
-    fontSize: 10, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em',
-    color: 'var(--accent)', marginBottom: 6,
+  tdLabel: { fontSize: 12, color: 'var(--text-dim)', padding: '6px 6px', textAlign: 'left' },
+  td: {
+    fontSize: 12, fontFamily: 'var(--mono)', color: 'var(--accent)', textAlign: 'right',
+    padding: '6px 6px', borderBottom: '1px solid var(--border)',
   },
-  metricRow: { display: 'flex', alignItems: 'center', gap: 6, padding: '2px 0' },
-  metricIcon: { fontSize: 12, width: 16, textAlign: 'center' },
-  metricName: { fontSize: 12, color: 'var(--text-dim)', flex: 1 },
-  metricVal:  { fontSize: 12, fontFamily: 'var(--mono)', color: 'var(--text)', fontWeight: 500 },
   placeholder: {
-    flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center',
-    justifyContent: 'center', gap: 8, textAlign: 'center', padding: '16px 8px',
+    display: 'flex', flexDirection: 'column', alignItems: 'center',
+    justifyContent: 'center', gap: 8, textAlign: 'center', padding: '40px 8px',
   },
   phIcon:  { fontSize: 28, opacity: 0.35 },
   phText:  { fontSize: 13, fontWeight: 600, color: 'var(--text-dim)' },
   phSub:   { fontSize: 11, color: 'var(--text-muted)', lineHeight: 1.5 },
-  footer:  { fontSize: 11, color: 'var(--text-muted)', fontFamily: 'var(--mono)', marginTop: 'auto' },
 }

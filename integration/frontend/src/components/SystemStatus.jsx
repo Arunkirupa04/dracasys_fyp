@@ -6,6 +6,20 @@ export default function SystemStatus({ anyAnomaly, streamState }) {
       </div>
     )
   }
+  if (streamState === 'running') {
+    return (
+      <div style={{ ...styles.badge, ...styles.badgeRunning }}>
+        <span className="pulse-dot" style={styles.dot} /> Streaming
+      </div>
+    )
+  }
+  if (streamState === 'stopped') {
+    return (
+      <div style={{ ...styles.badge, ...styles.badgeIdle }}>
+        <span style={styles.dot} /> Stream Stopped
+      </div>
+    )
+  }
   if (anyAnomaly) {
     return (
       <div style={{ ...styles.badge, ...styles.badgeAlert }}>
@@ -27,9 +41,10 @@ const styles = {
     fontSize: 13, fontWeight: 600,
     border: '1px solid transparent',
   },
-  badgeIdle:   { background: 'var(--surface2)', color: 'var(--text-dim)', borderColor: 'var(--border)' },
-  badgeNormal: { background: 'rgba(34,197,94,0.12)', color: 'var(--green)', borderColor: 'rgba(34,197,94,0.3)' },
-  badgeAlert:  { background: 'rgba(239,68,68,0.12)', color: 'var(--red)',   borderColor: 'rgba(239,68,68,0.3)' },
+  badgeIdle:    { background: 'var(--surface2)', color: 'var(--text-dim)', borderColor: 'var(--border)' },
+  badgeRunning: { background: 'rgba(59,130,246,0.12)', color: 'var(--accent)', borderColor: 'rgba(59,130,246,0.3)' },
+  badgeNormal:  { background: 'rgba(34,197,94,0.12)', color: 'var(--green)', borderColor: 'rgba(34,197,94,0.3)' },
+  badgeAlert:   { background: 'rgba(239,68,68,0.12)', color: 'var(--red)',   borderColor: 'rgba(239,68,68,0.3)' },
   dot: {
     width: 8, height: 8, borderRadius: '50%', background: 'currentColor',
     display: 'inline-block',

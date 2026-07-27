@@ -1,15 +1,17 @@
 """
 Generates the synthetic container metrics stream (Stream A) used by
-Module 2 (resource forecasting) and Module 3 (system anomaly detection).
+Module 2 (resource forecasting). Module 3 no longer reads this stream —
+it uses its own calibrated windows (m3_window_generator.py) matched to its
+trained scaler's unit convention.
 
-Stream A layout:
-  Rows  0 – 999   : normal history (pre-seeded context for M2 + M3)
-  Rows 1000 – 1000: demo sample 1 — normal
-  Rows 1001 – 1001: demo sample 2 — normal
-  Rows 1002 – 1002: demo sample 3 — MEMORY LEAK anomaly  → triggers M3
-  Rows 1003 – 1003: demo sample 4 — CPU SATURATION + elevated memory → triggers M3
+Layout:
+  Rows  0 .. n_history-1        : normal history (pre-seeded GRU context)
+  Rows  n_history .. end        : demo samples — a gentle load ramp begins
+                                   partway through the demo tail, giving the
+                                   "actual vs predicted" chart a visible trend
+                                   for the GRU forecast to track.
 
-Columns (7, in the order Module 2 and Module 3 both expect):
+Columns (7, in the order Module 2 expects):
   container_cpu_usage_seconds_total    (cumulative counter)
   container_cpu_system_seconds_total   (cumulative counter)
   container_cpu_user_seconds_total     (cumulative counter)
@@ -36,12 +38,8 @@ COLUMNS = [
     "container_memory_cache",
 ]
 
-# Anomaly magnitudes (tuned so M3 reconstruction error > threshold 0.0980)
-MEMORY_LEAK_DELTA   = 900_000_000   # +900 MB
-CPU_SATURATION_RATE = 4.5           # 4.5× normal rate
 
-
-def generate(n_history: int = 1000, n_demo: int = 4, seed: int = 42) -> pd.DataFrame:
+def generate(n_history: int = 1000, n_demo: int = 10, seed: int = 42) -> pd.DataFrame:
     """
     Returns DataFrame of shape (n_history + n_demo, 7).
     All values are raw (not normalized).
@@ -57,7 +55,16 @@ def generate(n_history: int = 1000, n_demo: int = 4, seed: int = 42) -> pd.DataF
         + 0.08 * np.sin(2 * np.pi * t / 120)           # short burst cycle
         + 0.05 * rng.standard_normal(total)
     )
-    cpu_rate = np.clip(cpu_rate, 0.05, 1.8)
+
+    # Gentle load ramp over the back half of the demo tail — gives the
+    # actual-vs-predicted chart a real trend without pushing the model far
+    # outside its training distribution.
+    ramp = np.zeros(total)
+    ramp_start = n_history + max(1, n_demo // 3)
+    if ramp_start < total:
+        ramp_len = total - ramp_start
+        ramp[ramp_start:] = np.linspace(0, 0.5, ramp_len)
+    cpu_rate = np.clip(cpu_rate + ramp, 0.05, 2.2)
 
     # Cumulative counters: integrate rate × Δt (15 s per tick)
     # Offset so the middle of the stream aligns with training mean ≈ 1050 s
@@ -67,31 +74,19 @@ def generate(n_history: int = 1000, n_demo: int = 4, seed: int = 42) -> pd.DataF
 
     # ── Memory gauges (bytes) ──────────────────────────────────────────
     mem_base = 82_000_000   # ~82 MB baseline (matches training mean)
+    mem_ramp = np.zeros(total)
+    if ramp_start < total:
+        mem_ramp[ramp_start:] = np.linspace(0, 18_000_000, total - ramp_start)
+
     mem_usage = (
         mem_base
         + 12_000_000 * np.sin(2 * np.pi * t / 800)
         + 4_000_000  * rng.standard_normal(total)
+        + mem_ramp
     )
     mem_wss   = 0.93 * mem_usage + 1_500_000 * rng.standard_normal(total)
     mem_rss   = 0.87 * mem_usage + 1_500_000 * rng.standard_normal(total)
     mem_cache = 0.10 * mem_usage + 800_000   * rng.standard_normal(total)
-
-    # ── Anomaly injection into demo samples 3 and 4 ───────────────────
-    # Sample 3 (index n_history + 2 = 1002): memory leak spike
-    i3 = n_history + 2
-    mem_usage[i3] += MEMORY_LEAK_DELTA
-    mem_wss[i3]   += int(MEMORY_LEAK_DELTA * 0.97)
-    mem_rss[i3]   += int(MEMORY_LEAK_DELTA * 0.90)
-
-    # Sample 4 (index 1003): CPU saturation + memory still elevated
-    i4 = n_history + 3
-    # Spike the last 5 ticks of CPU rate (affects cumulative counter at i4)
-    cpu_rate[i4 - 4 : i4 + 1] = CPU_SATURATION_RATE
-    cpu_total[i4 - 4 : i4 + 1] = np.cumsum(
-        cpu_rate[i4 - 4 : i4 + 1] * 15.0
-    ) + cpu_total[i4 - 5]
-    mem_usage[i4] += int(MEMORY_LEAK_DELTA * 0.85)
-    mem_wss[i4]   += int(MEMORY_LEAK_DELTA * 0.82)
 
     # Clip to physically plausible ranges
     mem_usage  = np.clip(mem_usage,  10_000_000, 4_000_000_000)
@@ -113,12 +108,4 @@ def generate(n_history: int = 1000, n_demo: int = 4, seed: int = 42) -> pd.DataF
             "container_memory_cache":              mem_cache,
         }
     )
-    return df   # shape: (1004, 7)
-
-
-def describe_sample(df: pd.DataFrame, sample_index: int, n_history: int = 1000) -> str:
-    """Human-readable description of a demo sample (0-based)."""
-    row_idx = n_history + sample_index
-    row = df.iloc[row_idx]
-    labels = ["Normal workload", "Normal workload", "Memory leak anomaly", "CPU saturation + memory spike"]
-    return labels[sample_index]
+    return df   # shape: (n_history + n_demo, 7)
