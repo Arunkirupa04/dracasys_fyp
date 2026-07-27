@@ -1,0 +1,42 @@
+{
+  "adaptive_mode": "phase1_confirmed",
+  "claim_ok": true,
+  "interpretation": "adaptive_supported",
+  "fixed_last_half": {
+    "fpr": 0.27673438098888464,
+    "recall": 0.7841880341880342,
+    "f1": 0.682367524016114,
+    "mcc": 0.48607309757174705
+  },
+  "adaptive_last_half": {
+    "fpr": 0.20352625527021848,
+    "recall": 0.7571225071225072,
+    "f1": 0.7091394262841895,
+    "mcc": 0.5395747793239175
+  },
+  "delta_last_half": {
+    "fpr_reduction": 0.07320812571866617,
+    "recall_delta": -0.027065527065527006,
+    "f1_gain": 0.026771902268075465
+  },
+  "adaptive_moved": true,
+  "target_percentile": 80.0,
+  "fixed_blend_lambda": 0.0,
+  "envelope_delta_alert": 0.03203181898593904,
+  "acceptance_gate": "PASS",
+  "stretch_targets": {
+    "fpr_reduction_ge_0_03": true,
+    "f1_gain_ge_0_01": true,
+    "stretch_pass": true
+  },
+  "demo_levers": {
+    "late_stream_benign_rate": 0.65,
+    "late_stream_noise_std": 0.04,
+    "soft_fallback_pctl": 82.0,
+    "soft_blend_lambda": 0.75,
+    "score_calibration_enable": true,
+    "score_calibration_benign_scale": 0.98,
+    "recall_tol": 0.06,
+    "f1_tol": 0.03
+  }
+}

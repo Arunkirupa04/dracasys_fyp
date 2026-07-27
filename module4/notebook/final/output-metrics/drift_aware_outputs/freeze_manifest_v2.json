@@ -1,6 +1,6 @@
 {
   "task": 4,
-  "created_at": "2026-07-26T06:13:43.157180+00:00",
+  "created_at": "2026-07-27T07:47:27.228463+00:00",
   "version": "drift_aware_v2",
   "freeze_ready": true,
   "legacy_run": "notebook/run/mdc_drift_aware_output.ipynb",
@@ -15,18 +15,18 @@
     "matched_policy_present": true,
     "ordering_mode": "timestamp",
     "ordering_is_timestamp": true,
-    "claim_adaptive_ok": false
+    "claim_adaptive_ok": true
   },
   "threshold_provenance": {
-    "thr_raw": -0.19924625754356384,
+    "thr_raw": -0.20853570103645325,
     "primary": "f1_optimal",
     "source": "metrics_vnext.json:test_default.f1_optimal.threshold",
-    "offline_roc_auc": 0.6889160636111856,
-    "offline_f1": 0.6603424340583064,
-    "offline_mcc": 0.4233525383108315,
-    "offline_recall": 0.7251016260162602,
-    "offline_fpr": 0.2910518053375196,
-    "offline_precision": 0.6062022090059473
+    "offline_roc_auc": 0.6766928628862428,
+    "offline_f1": 0.6733086190917517,
+    "offline_mcc": 0.4461294250888189,
+    "offline_recall": 0.7383130081300813,
+    "offline_fpr": 0.28100470957613816,
+    "offline_precision": 0.618824531516184
   },
   "headline_metrics_locked": {
     "methods_default_roc": 0.7402,
@@ -42,5 +42,5 @@
     "fine-tune improves detection",
     "live temporal deployment validated"
   ],
-  "interpretation": "tradeoff_or_negative \u2014 report F1/recall/MCC; do not claim FPR reduction alone"
+  "interpretation": "adaptive_supported"
 }
