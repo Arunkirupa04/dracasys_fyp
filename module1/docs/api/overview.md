@@ -39,4 +39,4 @@ Not built-in. Deploy API gateway if needed.
 
 Not built-in. Place behind API gateway or add FastAPI dependency for production.
 
-See [integration_guide.md](integration_guide.md) and [api_reference.md](api_reference.md).
+See [integration.md](integration.md) and [reference.md](reference.md).

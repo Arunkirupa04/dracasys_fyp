@@ -9,6 +9,7 @@ import pandas as pd
 
 from app.config.settings import Settings
 from app.utils.errors import BadRequestError, UnprocessableEntityError
+from app.utils.timestamps import to_naive_utc
 
 
 def validate_forecast_request(
@@ -65,7 +66,7 @@ def validate_forecast_request(
         raise UnprocessableEntityError("historical_cpu has zero variance (degenerate series)")
 
     try:
-        ts = pd.to_datetime(timestamps, utc=True)
+        ts = to_naive_utc(pd.Series(timestamps))
     except Exception as exc:
         raise BadRequestError("Invalid timestamp format; use ISO-8601") from exc
 
@@ -90,7 +91,9 @@ def build_future_timestamps(
     horizon_steps: int,
     interval_minutes: int,
 ) -> pd.DatetimeIndex:
-    """Generate future timestamps for the forecast horizon."""
+    """Generate future timestamps for the forecast horizon (naive UTC)."""
+    if getattr(last_timestamp, "tzinfo", None) is not None:
+        last_timestamp = last_timestamp.tz_localize(None)
     freq = f"{interval_minutes}min"
     start = last_timestamp + pd.Timedelta(minutes=interval_minutes)
-    return pd.date_range(start=start, periods=horizon_steps, freq=freq, tz=last_timestamp.tz)
+    return pd.date_range(start=start, periods=horizon_steps, freq=freq)

@@ -14,6 +14,8 @@ from app.inference.gru_predictor import predict_residuals
 from app.preprocessing.scaling import scale_history
 from app.preprocessing.validation import build_future_timestamps
 from app.prophet.forecaster import fit_and_forecast
+from app.utils.timestamps import format_forecast_timestamp
+from app.utils.timestamps import format_forecast_timestamp
 
 
 @dataclass
@@ -93,7 +95,9 @@ def run_hybrid_forecast(
         scaler_mode=scaler_mode,
         history_steps=len(history_df),
         horizon_steps=horizon_steps,
-        forecast_timestamps=[ts.isoformat() for ts in future_ts],
+        forecast_timestamps=[
+            format_forecast_timestamp(ts) for ts in future_ts
+        ],
         predicted_cpu=[float(v) for v in final_real],
         prophet_cpu=[float(v) for v in prophet_real],
         residual_cpu=[float(v) for v in residual_real],

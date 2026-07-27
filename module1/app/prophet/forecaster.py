@@ -7,6 +7,8 @@ from typing import Any
 import pandas as pd
 from prophet import Prophet
 
+from app.utils.timestamps import to_naive_utc
+
 
 def fit_and_forecast(
     history_df: pd.DataFrame,
@@ -20,7 +22,7 @@ def fit_and_forecast(
     Returns (model, full_forecast_df, future_yhat).
     """
     prophet_train = pd.DataFrame({
-        "ds": history_df["time_stamp"],
+        "ds": to_naive_utc(history_df["time_stamp"]),
         "y": history_df["cpu_scaled"],
     })
 
@@ -30,7 +32,8 @@ def fit_and_forecast(
     )
     model.fit(prophet_train)
 
-    future_df = pd.DataFrame({"ds": future_timestamps})
+    future_ds = to_naive_utc(pd.Series(future_timestamps))
+    future_df = pd.DataFrame({"ds": future_ds})
     forecast = model.predict(future_df)
     train_forecast = model.predict(prophet_train[["ds"]])
 

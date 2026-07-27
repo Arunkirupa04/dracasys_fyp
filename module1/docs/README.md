@@ -1,49 +1,20 @@
-# Documentation Index
+# Documentation
 
-Documentation for integrators and maintainers. **No thesis or research background required.**
+Documentation is split into two sections:
 
-## Getting started
+| Section | Audience | Start here |
+|---------|----------|------------|
+| **[API](api/README.md)** | Module developers integrating via HTTP | [Integration guide](api/integration.md) |
+| **[Implementation](implementation/README.md)** | Maintainers deploying or extending the service | [Deployment](implementation/deployment.md) |
 
-| Document | Description |
-|----------|-------------|
-| [README.md](README.md) | Documentation overview |
-| [integration_guide.md](integration_guide.md) | **Start here** — how other modules call the API |
-| [deployment.md](deployment.md) | Install, configure, run, Docker |
-| [developer_guide.md](developer_guide.md) | Local development workflow |
+## API documentation
 
-## Architecture & design
+For calling the forecast REST API — endpoints, schemas, errors, client examples, validation.
 
-| Document | Description |
-|----------|-------------|
-| [architecture.md](architecture.md) | High-level system architecture |
-| [system_design.md](system_design.md) | Components and responsibilities |
-| [forecast_pipeline.md](forecast_pipeline.md) | End-to-end inference pipeline |
-| [preprocessing.md](preprocessing.md) | Input validation and scaling |
-| [prophet_pipeline.md](prophet_pipeline.md) | Prophet seasonal component |
-| [gru_pipeline.md](gru_pipeline.md) | GRU residual component |
+→ **[docs/api/README.md](api/README.md)**
 
-## API
+## Implementation documentation
 
-| Document | Description |
-|----------|-------------|
-| [api_overview.md](api_overview.md) | REST API summary |
-| [api_reference.md](api_reference.md) | Endpoint reference |
-| [request_response_spec.md](request_response_spec.md) | Full request/response schemas |
+For running the service, internal architecture, inference pipeline, artifacts, and development.
 
-## Model & artifacts
-
-| Document | Description |
-|----------|-------------|
-| [artifact_reference.md](artifact_reference.md) | Frozen artifact files |
-| [configuration.md](configuration.md) | Configurable parameters |
-| [limitations.md](limitations.md) | Known limits |
-| [versioning.md](versioning.md) | Version policy |
-
-## Quality & support
-
-| Document | Description |
-|----------|-------------|
-| [testing.md](testing.md) | Test strategy |
-| [faq.md](faq.md) | Common questions |
-| [glossary.md](glossary.md) | Term definitions |
-| [future_extensions.md](future_extensions.md) | Planned extensions |
+→ **[docs/implementation/README.md](implementation/README.md)**

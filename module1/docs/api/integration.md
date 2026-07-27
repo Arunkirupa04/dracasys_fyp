@@ -4,7 +4,7 @@ For other DracaSys module developers integrating CPU forecasting.
 
 ## Prerequisites
 
-- Forecast service running (see [deployment.md](deployment.md))
+- Forecast service running (see [implementation/deployment.md](../implementation/deployment.md))
 - Historical CPU data: **≥ 200** samples at **15-minute** intervals
 - Container ID string (known IDs get better scaler consistency)
 
@@ -64,18 +64,7 @@ curl http://localhost:8000/health
 
 ## 3. Client examples
 
-| Language | File |
-|----------|------|
-| curl | [examples/client_curl.sh](../examples/client_curl.sh) |
-| Python | [examples/client_python.py](../examples/client_python.py) |
-| Java | [examples/client_java.java](../examples/client_java.java) |
-| JavaScript | [examples/client_javascript.js](../examples/client_javascript.js) |
-
-Generate sample data:
-
-```bash
-python examples/generate_sample_request.py
-```
+See [examples.md](examples.md) for sample JSON files and client code in curl, Python, Java, and JavaScript.
 
 ## 4. Batch forecast
 
@@ -93,6 +82,8 @@ python examples/generate_sample_request.py
 Max **50** requests per batch. Failed items return `"status": "error"` without failing the whole batch.
 
 ## 5. Common errors
+
+See [errors.md](errors.md) for the full troubleshooting table.
 
 | HTTP | Message | Fix |
 |------|---------|-----|
@@ -128,4 +119,4 @@ OpenAPI JSON: **http://localhost:8000/openapi.json**
 - [ ] Pin `hybrid_v1` artifact version in deployment
 - [ ] Do not mount artifacts read-write
 
-See [request_response_spec.md](request_response_spec.md) for full field definitions.
+See [schemas.md](schemas.md) for full field definitions. Sample payloads: [examples.md](examples.md).
