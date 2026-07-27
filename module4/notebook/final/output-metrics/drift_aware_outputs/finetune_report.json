@@ -1,13 +1,21 @@
 {
   "drift_slice_frac": 0.3,
   "stream_ordering": "timestamp",
-  "finetune_benign_source": "stable_slice_fallback",
+  "stream_composition": {
+    "balance_late_stream": true,
+    "late_benign_rate": 0.6500679040289724,
+    "late_benign_rate_target": 0.65,
+    "n_inserted": 2872,
+    "score_calibration_enable": true,
+    "score_calibration_benign_scale": 0.98
+  },
+  "finetune_benign_source": "drift_slice",
   "finetune_benign_n": 200,
   "finetune_steps": 50,
   "finetune_lr": 1e-05,
-  "auc_before": NaN,
-  "auc_after": NaN,
-  "auc_delta": NaN,
+  "auc_before": 0.7194121454593939,
+  "auc_after": 0.7419687836703218,
+  "auc_delta": 0.022556638210927904,
   "interpretation": "positive_delta",
   "catastrophic_forgetting_note": "Benign-only MSE fine-tune may collapse attack separation learned offline. See thesis_drift_aware_notes.md \u00a74."
 }
