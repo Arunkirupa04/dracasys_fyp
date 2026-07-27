@@ -1,0 +1,8 @@
+{
+  "container_id": "c_1016",
+  "historical_cpu": [],
+  "timestamps": [],
+  "sampling_interval_minutes": 15,
+  "prediction_horizon_steps": 96,
+  "_note": "Replace historical_cpu and timestamps with >= 200 aligned samples. See examples/generate_sample_request.py"
+}
