@@ -1,0 +1,230 @@
+# Project Results Matrix — Module 2: Short-Term Resource Prediction (Drift-Aware Approach)
+
+**Prepared for:** supervisor progress meeting
+**Scope:** Module 2 only, as defined in *Project Proposal — Intelligent Deployment Helper for Containerized Applications* (DracaSys, Group 24, University of Moratuwa, 2026)
+**Basis:** current implementation and **executed** outputs only. No code was modified to produce this document. Where something exists only as code with no executed evidence, it is explicitly labeled **"Implemented but not executed."**
+
+**Authoritative evidence source:** `final_notebook/final-output/` — the 4 notebooks in this folder are the ones with real `execution_count` values and real cell outputs (verified by inspecting the raw `.ipynb` JSON, not just reading printed text). `final_notebook/final-source/phase4 final.ipynb` is a **source template** with identical code to `final-output/phase4.ipynb` but zero execution outputs — it is not independent evidence, it is the pre-run copy of the same notebook.
+
+| Notebook | Cells | Executed? | Evidence |
+|---|---|---|---|
+| `final-output/phase1 final.ipynb` | 17 | ✅ Yes | Real printed outputs (row counts, artifact ratios, window stats) |
+| `final-output/phase2 final.ipynb` | 15 | ✅ Yes | 7/7 smoke test PASS lines, real PyTorch/CUDA version string |
+| `final-output/phase3 final.ipynb` | 13 | ✅ Yes | `execution_count` 25–31, real training/checkpoint logs |
+| `final-output/phase4.ipynb` | 25 | ✅ Yes | `execution_count` 12–23, real streaming/drift/live-window/export logs |
+| `final-source/phase4 final.ipynb` | 25 | ❌ Not executed | All cells show `execution_count: null`, zero outputs — kept as editable source only |
+
+---
+
+## 1. Proposal vs. Implementation Matrix
+
+Source: Proposal §5, "Module 2: Short-Term Resource Prediction – Drift-Aware Approach."
+
+| Proposal Requirement | Implemented? | Where Implemented (Notebook + Step + Cell) | Evidence from Execution | Comments |
+|---|---|---|---|---|
+| **Objective**: Forecast short-term resource usage (CPU, memory, network, disk) | **Partial** | `phase1 final.ipynb` Steps 2–6 (cells 3–12) | 4 targets predicted: `cpu_usage`, `mem_usage`, `mem_working_set`, `mem_rss` | Network and disk metrics are **not present** in the source data used (AIOpsArena `complex_case1`) and are **not predicted**. Only CPU + memory are covered. |
+| **Core technique**: GRU-based model | **Yes** | `phase2 final.ipynb` Step 2 (cells 3–4) — `AdaptiveGRUModel` | Smoke test `[1]`: 167,876-param model, forward pass verified (`phase2` cell 12 output) | 2-layer GRU, hidden=128, residual/persistence-anchored output |
+| **Drift-aware mechanism 1**: Adaptive sliding window (500–1000 samples), adjusts on workload variability | **Yes** | `phase1 final.ipynb` Step 7 (cells 13–14); extended by `phase4.ipynb` Step 9 (cells 17–18) | Phase1: train windows 500/887/1000 (min/mean/max), 51.6% shortened below max. Phase4 Step 9: live version, lengths 500/811/1000, 25.0% of anchors differ from the frozen version | Two variants exist: a **historical** (training-period-frozen) version used throughout Phases 1–3, and a **live** (continuously-updating) version added in Phase 4 Step 9. Both verified working; see §5. |
+| **Drift-aware mechanism 2**: Online/incremental learning, error-triggered | **Yes** | `phase2 final.ipynb` Step 5 (`OnlineAdapter` class, cells 9–10); exercised in `phase3` Step 5 and `phase4.ipynb` Step 3 (cells 5–6) | Smoke test `[6]`: weights verifiably change after `.adapt()` (phase2 cell 12). Real run: 3/8/9 online updates fired for horizons 1/2/3 respectively (phase4 cell 8 verdict output) | Fine-tunes on the most recent 4,096 already-seen windows, only when `DriftMonitor` fires. |
+| **Drift-aware mechanism 3**: Error monitoring (moving average + statistical checks) | **Yes** | `phase2 final.ipynb` Step 5 (`DriftMonitor` class, cells 9–10); exercised in `phase4.ipynb` Steps 3, 5–7 (cells 5–14) | Smoke test `[5]`: fires correctly on an 8–9× error jump (phase2 cell 12). Real run: full causal per-chunk debug log for h=3 with z-scores, EWMA values, and trigger points (phase4 Step 5–6 outputs) | EWMA(α=0.3) + z-score(threshold=3.0) vs. a frozen warm-up reference, requiring 2 consecutive hits to trigger. |
+| **Drift-aware mechanism 4**: Adaptive thresholding for prediction confidence | **Partial** | `phase2 final.ipynb` Step 5 (`AdaptiveThreshold` class, cells 9–10); called every chunk inside `stream_eval` in `phase3`/`phase4.ipynb` | Smoke test `[5]`: produces a valid (lo, hi) band (phase2 cell 12). Confirmed in real code: `bands.append(athresh.update(...))` runs every chunk in `phase4.ipynb` Step 3 | **Computed correctly, but never displayed, plotted, or used** in any decision anywhere in the executed notebooks — only the final band value sits unused inside the results dict. A genuine, disclosed gap. |
+| **Novelty**: Burst-aware forecasting | **Yes** | Bursts injected in `phase1 final.ipynb` Step 5 (cells 9–10); evaluated separately in `phase3 final.ipynb` Step 4/6 and `phase4.ipynb` Step 3–4 | 389 synthetic burst events injected (216 train / 81 val / 92 test), 8.69% of rows affected. GRU-static beats Persistence and SES on **all 3 memory targets at every horizon** on injected data (see §4) | The clearest, most defensible positive result in the project — see §8. |
+| **Novelty**: Multi-metric correlation modeling | **No** | — | — | The model shares one GRU hidden state across the 4 output heads, but there is **no explicit correlation mechanism** (no joint loss term, no cross-metric attention, no covariance modeling). This is an incidental side-effect of the architecture, not a designed novelty. Confirmed by inspecting `model_defs.py` / `AdaptiveGRUModel.forward()` — no such term exists. |
+| **Overarching objective 5**: Evaluate using real-world traces + synthetic workloads | **Yes** | `phase1 final.ipynb` (real AIOpsArena data + synthetic bursts) | 223,830 real rows, 27 real containers, 389 synthetic burst events layered on top | |
+| **Overarching objective 5**: Measure drift-adaptation speed / stability | **Yes** | `phase4.ipynb` Steps 5–7 (cells 9–14) | Per-chunk causal debug log + automated diagnosis distinguishing "genuine stabilization" from "detector limitation" (0 missed-threshold chunks found) | A genuinely rigorous piece of evaluation, not just a headline metric. |
+
+---
+
+## 2. Novelty Matrix
+
+| Novelty | Objective | Implementation | Evidence | Current Status | Remaining Limitations |
+|---|---|---|---|---|---|
+| **Adaptive Sliding Window** | Window length reacts to workload variability instead of being fixed | Historical: `phase1` Step 7, rolling-std(120) vs. frozen training-period median. Live: `phase4.ipynb` Step 9, rolling-std(120) vs. a continuously-updating causal 2000-step median | 51.6% of historical windows shortened below max (Phase1); 25.0% of anchors get a different length under the live version (Phase4 Step 9) | ✅ Working, both variants executed | Live version's effect on final accuracy was statistically negligible on this test stream (see §5) — genuinely adaptive, but not yet shown to *improve* results |
+| **Online / Incremental Learning** | Model adapts without full retraining, triggered by real errors | `OnlineAdapter` (`phase2` Step 5), fine-tunes on last 4,096 windows, called from `stream_eval` | 3 / 8 / 9 real weight updates for h=1/2/3 (`phase4.ipynb` cell 8); smoke-test proof that weights actually change (`phase2` cell 12 check `[6]`) | ✅ Working, verifiably changes weights | Updates are cheap (1 epoch, lr=1e-4) — not evaluated against a "full retrain" alternative for comparison |
+| **Drift Detection (Error Monitoring)** | Detect concept drift from prediction error statistically, not by a fixed rule | `DriftMonitor` (EWMA + z-score, `phase2` Step 5), exercised across the full injected test stream | Full causal per-chunk log for h=3: warm-up chunks 0–7, first trigger at chunk 10 (z=17.09), last trigger chunk 28, diagnosis confirms 0 chunks where drift was missed (`phase4.ipynb` Steps 5–7) | ✅ Working, self-audited | Threshold (z>3.0, sustain=2) is a fixed design choice, not tuned/validated against alternatives |
+| **Adaptive Thresholding** | Confidence band that adjusts with recent error patterns | `AdaptiveThreshold` (`phase2` Step 5), rolling P50/P90 band, called every chunk | Computed correctly every chunk (verified in `phase4.ipynb` Step 3 source: `bands.append(athresh.update(...))`) and stored in results | ⚠️ **Computed but not used** | Never displayed, plotted, or fed into any decision — a disclosed, real gap, not a hidden one |
+| **Synthetic Burst Injection** | Create realistic stress-test conditions since real data has no trustworthy natural spikes | `phase1 final.ipynb` Step 3 (artifact check disqualifies the real spikes) → Step 5 (ramp/hold/decay injection) | 389 events injected (216/81/92 train/val/test), 8.69% of all rows affected, physically-realistic (counter-based cpu never decreases from injection) | ✅ Working | — |
+| **Burst-aware Prediction** | Model should handle sudden spikes better than naive baselines | Evaluated in `phase3 final.ipynb` Step 4 and `phase4.ipynb` Step 4 | On injected data, GRU-static beats Persistence and SES on all 3 memory targets at every horizon (h1–h3); loses to Persistence on `cpu_usage` by a 0.03–0.09pt margin at every horizon | ✅ Mostly working — strongest result for memory metrics, weaker for CPU | GRU does **not** beat Persistence on `cpu_usage` specifically, on either clean or injected data |
+| **Multi-metric Prediction** | Predict multiple correlated resource metrics jointly | `AdaptiveGRUModel` outputs 4 targets from one shared GRU state | Confirmed output shape `(batch, 4)` in every executed run | ✅ Working as multi-*output*, ❌ not as multi-*metric correlation* | See §1 — no explicit correlation mechanism exists; this is joint prediction, not correlation modeling |
+
+---
+
+## 3. Pipeline Matrix
+
+| Phase | Purpose | Inputs | Outputs | Main Algorithms | Evidence | Status |
+|---|---|---|---|---|---|---|
+| **Phase 1** — Data, Bursts, Adaptive Windows | Load real data, inject synthetic bursts, build the historical adaptive window table | Raw AIOpsArena `complex_case1` CSVs (7 metric files) | `features_injected.npy`, `windows_{train,val,test}.npy`, `segments.json`, `feature_cols.json`, `normalization_stats.json`, zipped | Pivot/normalize, ramp-hold-decay burst injection, rolling-std adaptive window rule | 223,830 rows, 27 containers, 0 NaNs, 389 burst events, 51.6% windows shortened | ✅ Executed |
+| **Phase 2** — Model & Component Definitions | Define and smoke-test every reusable component before real training | Optional Phase 1 output (for real-file test) | `model_defs.py`, zipped | `AdaptiveGRUModel`, `WindowDataset`, `DriftMonitor`, `AdaptiveThreshold`, `OnlineAdapter`, baselines | 7/7 smoke tests PASS, including real-Phase-1-file compatibility | ✅ Executed |
+| **Phase 3** — Training + Static/Streaming Evaluation | Train the static GRU per horizon (1–3), evaluate against baselines, **also** run a streaming drift-aware evaluation | Phase 1 zip + Phase 2's `model_defs.py` | Checkpoints (`gru_h{1,2,3}_static.pt`), `all_metrics.json/.csv` | Adam + ReduceLROnPlateau + EarlyStopping training; persistence/SES baselines; DriftMonitor/OnlineAdapter streaming loop | Checkpoints at epoch 6/7/21, val_loss 0.00033/0.00063/0.00101 | ✅ Executed |
+| **Phase 4** — Streaming Drift Debug, Live Window, Production Export | Deep-dive the streaming drift mechanism with per-chunk logging, add the live adaptive window, export a production-ready model file | Phase 1–3 zips | `phase4_results.json`, `drift_debug_h3.png`, `live_window_validation.png`, `production_model.pt` | Same streaming mechanism as Phase 3 + causal debug logging + automated diagnosis + live-window computation + self-contained export | Full causal log, diagnosis output, 2.02 MB `production_model.pt` verified structurally correct | ✅ Executed |
+
+**Note on redundancy (factual observation, not a defect):** the streaming drift-aware evaluation (`DriftMonitor` + `OnlineAdapter` + `AdaptiveThreshold` running over the chronological injected-test stream) is implemented and **independently executed in both `phase3 final.ipynb` (Step 5) and `phase4.ipynb` (Step 3)**, using the same underlying mechanism and producing numerically consistent results (e.g. h=1 static MAPE 0.13% in both). Phase 4 is the more complete version — it adds per-chunk causal debug logging, automated diagnosis, the live window, and production export on top of the same core loop. This duplication is worth being able to explain if asked (see §6), though it is not incorrect — both executions corroborate each other.
+
+---
+
+## 4. Experimental Results Matrix
+
+All values are **MAPE %, MAE, RMSE**, averaged across the 4 target metrics (`cpu_usage`, `mem_usage`, `mem_working_set`, `mem_rss`), from the real executed output files (`all_metrics_per_target.csv`, `phase4_results.json`). Per-target breakdown is available in the raw CSV if needed.
+
+**R² is not computed anywhere in this project** — only MAE/RMSE/MAPE are used throughout (confirmed in `compute_metrics()` in `phase2 final.ipynb` Step 4). Reported as "Not computed" rather than omitted.
+
+### 4a. Static evaluation — Persistence vs. SES vs. GRU-static (Phase 3)
+
+**Clean test data (no injected bursts):**
+
+| Horizon | Method | MAE | RMSE | MAPE | R² |
+|---|---|---|---|---|---|
+| 1 | Persistence | 40,522 | 138,701 | **0.055%** | Not computed |
+| 1 | SES | 46,734 | 139,957 | 0.063% | Not computed |
+| 1 | GRU-static | 55,650 | 140,069 | 0.082% | Not computed |
+| 2 | Persistence | 80,953 | 196,067 | **0.110%** | Not computed |
+| 2 | SES | 87,684 | 196,946 | 0.118% | Not computed |
+| 2 | GRU-static | 122,457 | 229,138 | 0.209% | Not computed |
+| 3 | Persistence | 121,472 | 240,281 | **0.165%** | Not computed |
+| 3 | SES | 127,984 | 239,727 | 0.173% | Not computed |
+| 3 | GRU-static | 134,576 | 267,351 | 0.206% | Not computed |
+
+→ On clean data, **both baselines beat GRU-static at every horizon**. This is an honest, disclosed finding, not a positive result — see §8.
+
+**Injected (burst) test data:**
+
+| Horizon | Method | MAE | RMSE | MAPE | R² |
+|---|---|---|---|---|---|
+| 1 | Persistence | 106,517 | 264,309 | 0.133% | Not computed |
+| 1 | SES | 118,167 | 285,162 | 0.146% | Not computed |
+| 1 | GRU-static | 100,494 | 212,135 | **0.132%** | Not computed |
+| 2 | Persistence | 212,128 | 485,874 | 0.264% | Not computed |
+| 2 | SES | 221,517 | 503,405 | 0.275% | Not computed |
+| 2 | GRU-static | 153,754 | 292,736 | **0.213%** | Not computed |
+| 3 | Persistence | 317,683 | 702,548 | 0.396% | Not computed |
+| 3 | SES | 331,897 | 733,020 | 0.412% | Not computed |
+| 3 | GRU-static | 197,389 | 400,891 | **0.262%** | Not computed |
+
+→ On injected/burst data — the harder, more realistic condition — **GRU-static beats both baselines at every horizon**, by a widening margin as horizon increases. This is the project's strongest quantitative result.
+
+### 4b. Streaming (Adaptive) GRU — historical window vs. live window (Phase 4, injected data only)
+
+| Horizon | Window variant | Pass | MAPE (overall) | MAPE (spike) | MAPE (normal) | Online updates |
+|---|---|---|---|---|---|---|
+| 1 | Historical | Static | 0.132% | 0.237% | 0.086% | 0 |
+| 1 | Historical | Adaptive | **0.115%** | 0.222% | 0.069% | 3 |
+| 1 | Live | Static | 0.132% | 0.237% | 0.086% | 0 |
+| 1 | Live | Adaptive | 0.117% | 0.225% | 0.070% | 3 |
+| 2 | Historical | Static | 0.213% | 0.353% | 0.152% | 0 |
+| 2 | Historical | Adaptive | **0.200%** | 0.341% | 0.139% | 8 |
+| 2 | Live | Static | 0.213% | 0.353% | 0.152% | 0 |
+| 2 | Live | Adaptive | 0.200% | 0.339% | 0.140% | 8 |
+| 3 | Historical | Static | 0.262% | 0.463% | 0.174% | 0 |
+| 3 | Historical | Adaptive | 0.265% | 0.451% | 0.183% | 9 |
+| 3 | Live | Static | 0.262% | 0.463% | 0.174% | 0 |
+| 3 | Live | Adaptive | 0.264% | 0.449% | 0.182% | 9 |
+
+**Key finding, reported honestly:** the online-adaptive GRU improves over the static GRU at h=1 and h=2 (overall MAPE drops), but is essentially flat-to-slightly-worse at h=3 — matching the Phase 4 automated diagnosis that the model "genuinely stabilized" after its last adaptation at chunk 28, with 0 chunks afterward where drift was missed. The **historical vs. live window** comparison shows a negligible difference (agreement to 2 decimal places, true differences only in the 4th–5th decimal) — the live window is genuinely computed and causal, but did not produce a measurably different outcome on this specific test stream.
+
+---
+
+## 5. Adaptive Components Matrix
+
+| Component | What it does | When it runs | Input | Output | Evidence | Actually Adaptive? |
+|---|---|---|---|---|---|---|
+| **Historical Adaptive Window** | Sets input lookback length (500–1000) per prediction anchor from short-term (120-step) vs. training-period-frozen volatility ratio | Once, at data-preparation time (Phase 1) | `cpu_usage` column, per-container training statistics | `windows_{train,val,test}.npy` (anchor, length) pairs | 51.6% of train windows shortened below the 1000-step max (`phase1` Step 7) | ✅ Yes — measurably reacts to per-container/per-period volatility |
+| **Live Adaptive Window** | Same short-term signal, but reference is a continuously-updating causal 2000-step rolling median instead of a frozen snapshot | Continuously, re-derived at evaluation time for each anchor (Phase 4 Step 9) | `cpu_usage` column, live causal history (crosses into pre-test rows legitimately) | `windows_test_live.npy` | 25.0% of test anchors receive a different length than the historical version; bounds [500,1000] verified never violated (`phase4.ipynb` Step 9 output) | ✅ Yes, mechanically — though its effect on final MAPE was negligible in this test (§4b) |
+| **Drift Detection (DriftMonitor)** | EWMA(α=0.3) + z-score(>3.0, sustain 2) of chunk-level error vs. a frozen warm-up reference | Every chunk, during streaming evaluation (Phase 3 Step 5, Phase 4 Step 3) | Per-chunk MSE | Boolean drift flag → triggers `OnlineAdapter` | Full causal per-chunk log for h=3: first trigger chunk 10 (z=17.09), 9 total triggers, diagnosis found 0 missed-drift chunks afterward | ✅ Yes — statistically grounded, self-audited |
+| **Online Learning (OnlineAdapter)** | Fine-tunes the model for 1 epoch on the most recent 4,096 already-seen windows, only when triggered | Immediately after a `DriftMonitor` trigger | Recent windows (bounded, causal — no future data) | Updated model weights | 3/8/9 real updates for h=1/2/3; smoke-test proves weights measurably change (`phase2` cell 12 check `[6]`) | ✅ Yes — verified to actually change weights, not a no-op |
+| **Adaptive Threshold** | Rolling P50/P90 percentile band of recent absolute errors | Every chunk, alongside drift detection | Chunk-level absolute errors | A (lo, hi) confidence band | Computed correctly (`bands.append(...)` in source, smoke test check `[5]` produces valid ordered bounds) | ⚠️ Computed, **not used** — never displayed or consumed by any downstream logic |
+
+---
+
+## 6. Supervisor Discussion Matrix
+
+### Biggest achievements
+- A complete, 4-phase pipeline **actually executed end-to-end on Kaggle** (GPU), not just designed on paper.
+- All 4 of the proposal's Module 2 drift-aware mechanisms are implemented **and exercised with real, cited evidence** — not just present as unused code.
+- On the injected/burst test data — the condition the whole "drift-aware" premise is about — the GRU **beats both classical baselines at every horizon**, with the margin growing at longer horizons.
+- A genuinely rigorous self-audit: Phase 4's diagnosis step doesn't just report "it stopped retraining," it **proves** (0 missed-threshold chunks) that this was because the model stabilized, not because the detector failed.
+- A self-contained, **verifiably correct** production artifact (`production_model.pt`, 2.02 MB) — independently confirmed by inspecting its internal structure, not just trusting the print statement.
+
+### Strong evidence (cite these cell numbers)
+- Smoke test 7/7 PASS — `phase2 final.ipynb` Step 6, cell 12.
+- Real drift trigger + weight-change proof — `phase2 final.ipynb` Step 6, cell 12, checks `[5]`/`[6]`.
+- Burst-data GRU-vs-baseline win — `phase3 final.ipynb` Step 4, cell 8; `all_metrics_per_target.csv`.
+- Full causal drift debug log — `phase4.ipynb` Steps 5–6, cells 9–12.
+- Automated stabilization diagnosis — `phase4.ipynb` Step 7, cell 14.
+- Live window + production export — `phase4.ipynb` Steps 9–12, cells 17–24.
+
+### Limitations (be ready to state these plainly)
+- On **clean** (non-burst) data, GRU-static loses to plain Persistence at every horizon.
+- **Network and disk metrics** from the proposal are not implemented — only CPU and memory.
+- **"Multi-metric correlation modeling"** claimed as a novelty is not actually implemented as a distinct mechanism.
+- **AdaptiveThreshold** is computed but never displayed or used.
+- No formal hyperparameter search or multi-seed statistical validation in the final pipeline.
+- Streaming drift evaluation is duplicated (Phase 3 Step 5 and Phase 4 Step 3 do the same thing).
+- The Live Adaptive Window is real and causal but did not produce a measurable accuracy improvement in this test.
+
+### Risks
+- A supervisor could challenge "why does the adaptive GRU lose to persistence on clean data" — have the horizon-and-smoothness explanation ready (see §8).
+- A supervisor could ask why Live Window exists if it didn't change results — the honest answer is it's a proposal-literal implementation, correctly built and verified causal, whose benefit wasn't proven on *this* test stream (which may not contain a genuine long-run regime shift).
+- A supervisor could ask to see the AdaptiveThreshold band on a plot — it does not currently exist as a visualization.
+
+### Future work
+- Add network/disk metrics if data becomes available.
+- Add an explicit multi-metric correlation term (joint loss or cross-metric attention).
+- Surface AdaptiveThreshold as a visible confidence interval on predictions.
+- Multi-seed runs and a documented hyperparameter search.
+- Consolidate the duplicated streaming section into one canonical notebook location.
+- Test the Live Adaptive Window against a stream that contains a genuine sustained regime shift, not just localized bursts.
+
+### Questions your supervisor is likely to ask — with suggested answers
+
+| Likely Question | Suggested Answer |
+|---|---|
+| "Does your model actually beat the baselines?" | "Not on clean data — Persistence wins there, because at these short horizons (15–45s) the near future genuinely looks like the recent past. But on burst-injected data — the actual scenario this project targets — the GRU beats both baselines at every horizon, with a widening margin at longer horizons." |
+| "Is the drift detection real, or just a formula that never fires?" | "It fired for real — 3, 8, and 9 times for horizons 1, 2, 3 respectively, each one verified to change the model's weights. I have a full per-chunk log showing exactly when and why." |
+| "Why did it stop retraining partway through the stream?" | "I specifically tested that. After the last trigger at chunk 28, I checked every remaining chunk's z-score against the threshold — zero of them exceeded it. That rules out 'the detector missed something' and supports 'the model genuinely stabilized.'" |
+| "What's the adaptive sliding window actually adapting to?" | "Short-term (120-step) volatility of CPU usage, relative to a longer reference. I built two versions — one frozen at training time, one that updates live and reaches back through history — the live one changed the window length for 25% of test predictions." |
+| "Did the live window help?" | "It's honestly a close-to-neutral result on this test set — MAPE differs only in the 4th decimal place. I'm reporting that transparently rather than only showing a favorable framing." |
+| "Where's the adaptive threshold / confidence output?" | "It's computed correctly every chunk, but I haven't wired it into a visible output yet — that's an open item, not a hidden failure." |
+| "Why is drift evaluation in both Phase 3 and Phase 4?" | "Phase 3 runs the same core mechanism as part of its own evaluation; Phase 4 was built to add deep instrumentation on top of that mechanism, but Phase 3's own copy was never removed. Both give numerically consistent results." |
+| "Is this tested with multiple random seeds?" | "Not in the final pipeline — that existed in an earlier experimental line but wasn't carried into the 4-notebook final pipeline. It's a known, disclosed gap." |
+| "Did you do a hyperparameter search?" | "No — the hyperparameters (hidden size 128, lr 1e-3, etc.) were fixed choices, not the result of a documented search." |
+
+---
+
+## 7. Final Project Status
+
+| Proposal Requirement | Status |
+|---|---|
+| GRU-based short-term forecasting model | ✓ Completed |
+| CPU + memory forecasting | ✓ Completed |
+| Network + disk forecasting | ✗ Not Implemented |
+| Adaptive sliding window (500–1000, workload-variability-based) | ✓ Completed (historical + live variants) |
+| Online/incremental learning, error-triggered | ✓ Completed |
+| Error monitoring (moving average + statistical checks) | ✓ Completed |
+| Adaptive thresholding for prediction confidence | ⚠ Partially Completed (computed, not surfaced/used) |
+| Burst-aware forecasting | ✓ Completed |
+| Multi-metric correlation modeling | ✗ Not Implemented |
+| Evaluation on real + synthetic workloads | ✓ Completed |
+| Measurement of drift adaptation speed/stability | ✓ Completed |
+| Hyperparameter optimization | ✗ Not Implemented |
+| Multi-seed statistical validation | ✗ Not Implemented (in final pipeline) |
+| Self-contained production model export | ✓ Completed |
+
+---
+
+## 8. Final Overall Verdict
+
+**Is this sufficient for a Final Year Project?** Yes. The pipeline is real, executed end-to-end, and every core claim is backed by a specific cell and printed output rather than an assertion — that alone puts it ahead of a typical "notebook that runs once and is never audited" submission.
+
+**Are the objectives achieved?** Mostly. Short-term GRU forecasting and all four proposal-mandated drift-aware mechanisms are implemented and demonstrably active. The two shortfalls against the literal proposal text are: (1) network/disk metrics were never in scope of the available data, so only CPU/memory are covered, and (2) "multi-metric correlation modeling" is not a real distinct mechanism, just a shared hidden state.
+
+**Are the novelties implemented?** Adaptive sliding window, online learning, and drift detection are all genuinely implemented and evidenced with execution logs, not just defined in code. Adaptive thresholding is implemented but incomplete (computed, unused). Burst-aware prediction works and is the project's clearest win.
+
+**Which results are strongest?** The injected/burst-data comparison (§4a, second table) is the strongest quantitative result: GRU-static beats both classical baselines at every horizon, and the gap widens as horizon increases — exactly the behavior a "burst-aware" model should show. The Phase 4 diagnostic rigor (proving stabilization rather than just observing it) is the strongest *methodological* result.
+
+**Which parts are weakest?** The clean-data comparison, where Persistence wins at every horizon — this needs a clear, rehearsed explanation, not a defensive one. The Live Adaptive Window's near-zero measured effect is the second weakest point, though it's weak in a way that's honestly reportable rather than hidden.
+
+**What should you highlight tomorrow?**
+1. The injected-data GRU-vs-baseline win (§4a) — your strongest number.
+2. The full causal drift-detection-and-diagnosis chain (§2, §6) — shows engineering rigor, not just a working formula.
+3. The self-contained, independently-verified `production_model.pt` — shows the work is genuinely usable, not just a notebook artifact.
+4. Be upfront, unprompted, about the clean-data result, the missing network/disk metrics, and the unused AdaptiveThreshold band — raising them yourself, with a clear explanation, reads as far stronger than being caught out by a question.
