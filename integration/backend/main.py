@@ -3,7 +3,7 @@ DracaSys Integration Backend — FastAPI app.
 
 Endpoints:
   GET /api/status  → model load status + health check
-  GET /api/stream  → SSE stream (4 samples × 4 modules)
+  GET /api/stream  → SSE stream (N_DEMO_SAMPLES samples × 4 modules)
 """
 import sys
 from pathlib import Path
@@ -15,9 +15,10 @@ from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import StreamingResponse
 
-from backend.config import N_DEMO_SAMPLES
+from backend.config import M1_BASE_URL, N_DEMO_SAMPLES, N_HISTORY_ROWS
+from backend.config_loader import load_config
 from backend.data.synthetic_generator import generate as gen_container_stream
-from backend.inference.module1_stub import Module1Stub
+from backend.inference.module1_client import Module1Client
 from backend.inference.module2_predictor import Module2Predictor
 from backend.inference.module3_detector import Module3Detector
 from backend.inference.module4_detector import Module4Detector
@@ -40,26 +41,36 @@ _state: dict = {}
 async def startup():
     print("Loading models…")
 
-    _state["m1"] = Module1Stub()
-    print("[M1] Stub ready")
+    _state["m1"] = Module1Client()
 
     _state["m2"] = Module2Predictor()
     _state["m3"] = Module3Detector()
     _state["m4"] = Module4Detector()
 
     # Generate synthetic container stream (Stream A)
-    _state["container_df"] = gen_container_stream()
+    _state["container_df"] = gen_container_stream(n_history=N_HISTORY_ROWS, n_demo=N_DEMO_SAMPLES)
     print(f"[Data] Container stream: {_state['container_df'].shape}")
 
     print("All models loaded. Ready.")
 
 
+@app.get("/api/config")
+async def get_config():
+    """Shared UI + demo metadata (integration/config.json)."""
+    return load_config()
+
+
 @app.get("/api/status")
 async def status():
+    m1_healthy = await _state["m1"].check_health()
     return {
         "ready": True,
         "modules": {
-            "m1": "stub — not implemented",
+            "m1": (
+                f"reachable — hybrid_v1 (Prophet+GRU) @ {M1_BASE_URL}"
+                if m1_healthy
+                else f"unreachable — start `cd module1 && python run.py` (expects {M1_BASE_URL})"
+            ),
             "m2": "loaded — AdaptiveGRUModel (H1/H2/H3)",
             "m3": "loaded — VAEAloneDetector",
             "m4": "loaded — SequenceBottleneckAE HPO_best",

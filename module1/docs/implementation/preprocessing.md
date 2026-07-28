@@ -57,4 +57,4 @@ Fits only on data sent in the request.
 | Degenerate series | Flat CPU line |
 | Out of range | CPU < 0 or > 100 |
 
-See [request_response_spec.md](request_response_spec.md).
+See [api/schemas.md](../api/schemas.md).

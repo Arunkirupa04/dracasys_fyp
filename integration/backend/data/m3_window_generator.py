@@ -80,23 +80,49 @@ def _anomalous_row_cpu_saturated(rng: np.random.Generator) -> np.ndarray:
     return np.concatenate([cpu, mem])
 
 
-def generate_windows(seed: int = 77) -> list[np.ndarray]:
+def _anomalous_row_severe_combined(rng: np.random.Generator) -> np.ndarray:
     """
-    Returns a list of 4 windows, each shape (30, 7) float32.
-      Window 0 — normal
-      Window 1 — normal
-      Window 2 — memory leak anomaly
-      Window 3 — CPU saturation + memory anomaly
+    Severe combined degradation: both CPU saturation and memory leak at once —
+    used as the "grand finale" anomaly, worse than either alone.
+    """
+    cpu = np.array([
+        5.5 + rng.normal(0, 0.2),
+        2.2 + rng.normal(0, 0.1),
+        3.3 + rng.normal(0, 0.1),
+    ])
+    cpu = np.clip(cpu, 0.0, 12.0)
+
+    mem_u = SCALER_CENTER[3] + 4.0 * SCALER_SCALE[3] + rng.normal(0, 0.03)
+    mem_w = SCALER_CENTER[4] + 4.0 * SCALER_SCALE[4] + rng.normal(0, 0.03)
+    mem_r = SCALER_CENTER[5] + 3.6 * SCALER_SCALE[5] + rng.normal(0, 0.03)
+    mem_c = SCALER_CENTER[6] + 0.6 * SCALER_SCALE[6] + rng.normal(0, 0.01)
+    mem   = np.clip(np.array([mem_u, mem_w, mem_r, mem_c]), 0.01, 12.0)
+
+    return np.concatenate([cpu, mem])
+
+
+# Demo narrative across the streamed samples (0-based sample index → anomaly
+# generator). Any index not listed here is normal. Designed to loosely
+# correlate with Module 4's single confirmed security alert (see
+# module4_detector.ALERT_SAMPLE_INDEX): a CPU spike (index 6) precedes it,
+# and a severe combined degradation (index 9) follows as the aftermath.
+ANOMALY_PLAN = {
+    3: ("mem_leak", _anomalous_row_memory_leak),
+    6: ("cpu_sat",  _anomalous_row_cpu_saturated),
+    9: ("severe",   _anomalous_row_severe_combined),
+}
+
+
+def generate_windows(n: int = 10, seed: int = 77) -> list[np.ndarray]:
+    """
+    Returns a list of n windows, each shape (30, 7) float32.
+    All indices are normal except those in ANOMALY_PLAN.
     """
     rng = np.random.default_rng(seed)
     windows = []
 
-    for desc, row_fn in [
-        ("normal",   _normal_row),
-        ("normal",   _normal_row),
-        ("mem_leak", _anomalous_row_memory_leak),
-        ("cpu_sat",  _anomalous_row_cpu_saturated),
-    ]:
+    for i in range(n):
+        _, row_fn = ANOMALY_PLAN.get(i, ("normal", _normal_row))
         rows = np.stack([row_fn(rng) for _ in range(30)], axis=0)  # (30, 7)
         windows.append(rows.astype(np.float32))
 

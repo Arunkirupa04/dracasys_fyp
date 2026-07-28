@@ -30,7 +30,7 @@ Working directory must be `forecast_service/` (so `app` package resolves).
 1. Define schema in `app/api/schemas.py`
 2. Add route in `app/api/routes.py`
 3. Implement logic in `app/services/`
-4. Document in `docs/api_reference.md`
+4. Document in `docs/api/reference.md`
 5. Add tests in `tests/`
 
 ## Running tests

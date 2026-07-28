@@ -14,6 +14,20 @@ export default function ModuleCard({
     ? '0 0 20px rgba(239,68,68,0.15)'
     : 'none'
 
+  const dotColor = {
+    idle:    'var(--text-muted)',
+    pending: 'var(--accent)',
+    error:   'var(--yellow)',
+    ready:   isAnomaly ? 'var(--red)' : 'var(--green)',
+  }[status] || 'var(--text-muted)'
+
+  const statusLabel = {
+    idle:    'Waiting…',
+    pending: 'Processing…',
+    error:   'Error',
+    ready:   isAnomaly ? 'Alert' : 'Normal',
+  }[status] || ''
+
   return (
     <div style={{ ...styles.card, border: alertBorder, boxShadow: alertGlow }}>
       {/* Card header */}
@@ -30,15 +44,12 @@ export default function ModuleCard({
 
       {/* Status indicator */}
       <div style={styles.statusRow}>
-        <span style={{
-          ...styles.statusDot,
-          background: status === 'ready'
-            ? (isAnomaly ? 'var(--red)' : 'var(--green)')
-            : 'var(--text-muted)',
-        }} />
-        <span style={{ ...styles.statusText, color: status === 'ready' ? 'var(--text)' : 'var(--text-muted)' }}>
-          {status === 'idle'  && 'Waiting…'}
-          {status === 'ready' && (isAnomaly ? 'Alert' : 'Normal')}
+        <span
+          className={status === 'pending' ? 'pulse-dot' : undefined}
+          style={{ ...styles.statusDot, background: dotColor }}
+        />
+        <span style={{ ...styles.statusText, color: status === 'idle' ? 'var(--text-muted)' : 'var(--text)' }}>
+          {statusLabel}
         </span>
       </div>
 
@@ -58,7 +69,7 @@ const styles = {
     flexDirection: 'column',
     overflow: 'hidden',
     transition: 'border-color 0.3s, box-shadow 0.3s',
-    minHeight: 340,
+    minHeight: 0,
   },
   header: { padding: '16px 16px 10px' },
   headerTop: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 },

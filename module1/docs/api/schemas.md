@@ -1,4 +1,4 @@
-# Request & Response Specification
+# Request & Response Schemas
 
 ## POST /forecast — Request
 

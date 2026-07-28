@@ -127,7 +127,9 @@ class Module2Predictor:
     def predict(self, raw_np: np.ndarray) -> dict:
         """
         raw_np : (N, 7) float64 container metrics, N >= 1000.
-        Returns dict with forecasts for all 3 horizons.
+        Returns dict with the current actual reading plus forecasts for all
+        3 horizons — the "actual" values let the UI plot an actual-vs-predicted
+        trend chart using the same units/columns as the forecast targets.
         """
         X = self._preprocess(raw_np)
         lengths = torch.tensor([X.shape[1]])
@@ -148,9 +150,18 @@ class Module2Predictor:
                 "mem_rss_mb":      round(float(pred_real[3]) / 1e6, 2),
             }
 
+        current = raw_np[-1]  # most recent actual observation, same columns as targets
+        actual_out = {
+            "cpu_usage":    round(float(current[0]), 2),
+            "mem_usage_mb": round(float(current[3]) / 1e6, 2),
+            "mem_wss_mb":   round(float(current[4]) / 1e6, 2),
+            "mem_rss_mb":   round(float(current[5]) / 1e6, 2),
+        }
+
         return {
             "module":   "m2",
             "status":   "ok",
             "label":    "Short-Term Resource Prediction",
+            "actual":   actual_out,
             "horizons": horizons_out,
         }

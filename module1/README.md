@@ -65,7 +65,11 @@ Environment variables (prefix `FORECAST_`):
 
 ## Documentation
 
-See **[docs/README.md](docs/README.md)** for the full documentation index.
+| Section | Description |
+|---------|-------------|
+| **[docs/api/](docs/api/README.md)** | **API documentation** — endpoints, schemas, integration, errors, examples |
+| **[docs/implementation/](docs/implementation/README.md)** | Deployment, architecture, pipeline, artifacts, development |
+| **[docs/README.md](docs/README.md)** | Full documentation index |
 
 ## Isolation
 
