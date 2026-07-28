@@ -1,5 +1,3 @@
-import { useEffect, useRef } from 'react'
-
 const TYPE_COLORS = {
   info:    'var(--text-dim)',
   success: 'var(--green)',
@@ -8,12 +6,6 @@ const TYPE_COLORS = {
 }
 
 export default function EventLog({ entries }) {
-  const bottomRef = useRef(null)
-
-  useEffect(() => {
-    bottomRef.current?.scrollIntoView({ behavior: 'smooth' })
-  }, [entries])
-
   if (entries.length === 0) return null
 
   return (
@@ -28,7 +20,6 @@ export default function EventLog({ entries }) {
             </span>
           </div>
         ))}
-        <div ref={bottomRef} />
       </div>
     </div>
   )
