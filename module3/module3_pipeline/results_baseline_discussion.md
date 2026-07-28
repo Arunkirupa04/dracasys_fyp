@@ -94,3 +94,77 @@ defensible, and more interesting claim is:
 This framing turns a potentially awkward result into direct evidence *for* the
 module's stated purpose — a drift-aware detector should be judged on how it
 performs under drift, and that is exactly where it wins.
+
+
+---
+
+## Stage A–C improvement notes (pipeline update)
+
+This section records the evidence-based improvement path implemented inside
+`module3_pipeline/` only (no changes to `experiments/` or `module3_pipeline_v2/`).
+
+### Root causes (confirmed)
+
+1. **In-distribution PR-AUC ≈ 0.60** is primarily a **ranking / representation ceiling**
+   at window=30 (oracle F1 ≈ 0.69), not a threshold bug. Hyperparameter retuning,
+   extended features, max-pooling, and reconstruction-probability scoring were
+   previously tried and made results worse.
+2. **Drift precision/FPR weakness** is driven by **normal-score distribution shift**
+   on `drift_cc2` (KS ≈ 0.41): ROC/Recall stay high while Precision falls because
+   a CC1-calibrated `val_p99` flags many shifted normals. Stage A diagnostics in
+   `vae_eval.ipynb` quantify this (normal p99 ratios and P/R at fixed FPR).
+3. **Incremental learning previously never stabilized** (15/15 fine-tunes) because
+   the KS reference stayed frozen on CC1-train errors.
+
+### Implemented fixes
+
+| Stage | Change | Notebook |
+|---|---|---|
+| A | Score-shift diagnostics (quantiles, fixed-FPR/Recall tables) | `vae_eval.ipynb` |
+| B | Shrinkage **relative scoring** `(mse−μ)/(σ+ε)` + FPR-targeted `k` | `adaptive_threshold_blended.ipynb` |
+| C | KS streak gate (2), FT buffer purify, EMA reference update | `incremental_learning.ipynb` |
+| E | Rollup vs target table; Stage D trigger flag | `final_comparison.ipynb` |
+
+### Stage D policy
+
+Window=60 is **not** adopted by default. Prior measurements showed large ID PR-AUC
+gains but worse drift. Stage D runs only if post–Stage B/C ID PR-AUC remains &lt; 0.65
+**and** the joint drift acceptance bar is met; otherwise keep window=30.
+
+### How to read new artifacts
+
+- `models/vae_cc1_eval.pkl` → includes `stage_a_diagnostics`
+- `models/vae_cc1_adaptive_blended_eval.pkl` → includes `relative_results`, `best_k_rel`
+- `models/incremental_learning_eval.pkl` → Stage C treatment metrics + `ks_events`
+- `models/stage_e_improvement_rollup.pkl` → target comparison + `stage_d_needed`
+
+
+---
+
+## VAE + Gaussian score fusion (base PR-AUC, window=30)
+
+**Problem:** VAE-alone ID PR-AUC ≈ 0.60. Window∈{45,50,60} raises ID PR-AUC but
+collapses or worsens `drift_cc2`. Mid-window is not a compromise.
+
+**Approach (implemented in `baseline_comparison.ipynb` / `final_comparison.ipynb`):**
+
+- Keep `WINDOW_SIZE=30` and the trained VAE.
+- Fuse z-scored scores: `α·z(VAE_MSE) + (1-α)·z(||x||²)` with μ/σ from `cc1_train` only.
+- **Deployed α = 0.5** (fixed a priori — leak-free).
+- Threshold = `val_p99` of fused scores on `cc1_val`.
+- Also report α-grid and `max(z_v, z_g)`; best-α-on-test is diagnostic only.
+
+**Why this can raise base PR-AUC without W=60:** Gaussian alone already has ID
+PR-AUC ≈ 0.655. Fusion pulls the ranking toward that signal on in-distribution
+data while retaining a VAE component for drift.
+
+**How to evaluate after running the notebook:**
+
+| Check | Pass if |
+|---|---|
+| Base PR-AUC | `fusion_deployed` cc1_test PR-AUC **>** VAE (~0.601) |
+| Stretch | cc1_test PR-AUC **≥ 0.65** (match/beat Gaussian) |
+| Drift | drift_cc2 PR-AUC not far below VAE (~0.41); prefer ≫ pure Gaussian (~0.14) |
+
+If fusion still cannot beat ~0.65 ID PR-AUC, next lever is a **sequence AE at W=30**,
+not another window-size search.

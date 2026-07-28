@@ -1,6 +1,6 @@
 # 01 — Project Overview & Architecture
 
-> **Scope of this file**: what the project is for, what the system actually does end-to-end, how the codebase is organized, and the technology stack. Data-level detail lives in `02_data_pipeline_and_methodology.md`; the experiment-by-experiment research trail lives in `03_experiments_and_research_history.md`; final numbers and reproduction steps live in `04_final_model_results_and_reproducibility.md`; integration/deployment guidance lives in `05_model_integration_and_developer_guide.md`; the window=60 / Phase 1–4 improvement track lives in `06_pipeline_v2_phase14_improvements.md`.
+> **Scope of this file**: what the project is for, what the system actually does end-to-end, how the codebase is organized, and the technology stack. Data-level detail lives in `02_data_pipeline_and_methodology.md`; the experiment-by-experiment research trail lives in `03_experiments_and_research_history.md`; final numbers and reproduction steps live in `04_final_model_results_and_reproducibility.md`; integration/deployment guidance lives in `05_model_integration_and_developer_guide.md`.
 
 ---
 
